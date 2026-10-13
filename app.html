@@ -1,0 +1,860 @@
+<title>컨트롤박스 배선 연습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: 단계 레일 | 미션 + (도면 시트 ⟷ 판넬 백플레이트) 작업대. 도면은 종이, 판넬은 아연도 강판 느낌 */
+:root{
+  --bg:#e6eaeb; --surface:#f6f7f7; --line:#c6cdd0; --fg:#1b2326; --muted:#5a666b;
+  --paper:#ffffff; --ink:#22303a; --sky:#2a8bd6; --pink:#c42f78; --paper-edge:#9fb0bb;
+  --plate:#cfd5d7; --plate-2:#c2c9cc; --rail:#8f999e; --zone:#dfe4e5;
+  --dev:#f3f4f2; --dev-edge:#6f7a80; --dev-ink:#243036; --dev-2:#e4e7e6;
+  --accent:#d97200; --accent-ink:#ffffff; --ok:#1d8749; --bad:#c42b2b;
+  --v-l:#b4521f; --v-n:#2a6fd6; --v-p:#e48a12; --v-m:#4b5862; --v-s:#3d4348; --v-t:#8a949a;
+  --font:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13181a; --surface:#1b2124; --line:#313a3e; --fg:#e4e9ea; --muted:#97a3a8;
+  --paper:#1a2023; --ink:#d5dee3; --sky:#5bb0ef; --pink:#ef6fab; --paper-edge:#3e4b53;
+  --plate:#30383c; --plate-2:#283034; --rail:#5f6a70; --zone:#252c2f;
+  --dev:#e7eae8; --dev-edge:#59646a; --dev-ink:#1f292e; --dev-2:#d3d8d6;
+  --accent:#f08c1a; --accent-ink:#1a1206; --ok:#3fbf73; --bad:#ff6b6b;
+  --v-l:#e07a45; --v-n:#5c98f0; --v-p:#ffab3d; --v-m:#9aa8b2; --v-s:#c9d1d6; --v-t:#7d8c95; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13181a; --surface:#1b2124; --line:#313a3e; --fg:#e4e9ea; --muted:#97a3a8;
+  --paper:#1a2023; --ink:#d5dee3; --sky:#5bb0ef; --pink:#ef6fab; --paper-edge:#3e4b53;
+  --plate:#30383c; --plate-2:#283034; --rail:#5f6a70; --zone:#252c2f;
+  --dev:#e7eae8; --dev-edge:#59646a; --dev-ink:#1f292e; --dev-2:#d3d8d6;
+  --accent:#f08c1a; --accent-ink:#1a1206; --ok:#3fbf73; --bad:#ff6b6b;
+  --v-l:#e07a45; --v-n:#5c98f0; --v-p:#ffab3d; --v-m:#9aa8b2; --v-s:#c9d1d6; --v-t:#7d8c95; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.55}
+.wrap{max-width:1680px;margin:0 auto;padding-inline:16px;padding-block:14px 40px}
+header.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:2px solid var(--fg);margin-bottom:14px}
+header.top h1{font-size:22px;margin:0;letter-spacing:-.01em;font-weight:700}
+header.top .sub{color:var(--muted);font-size:13px}
+.game{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+.levels{display:flex;flex-direction:column;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);max-height:100vh;overflow-y:auto;padding-bottom:12px}
+.levels h2{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:12px 0 2px 10px;font-weight:600}
+.levels h2:first-child{margin-top:0}
+.lv{all:unset;cursor:pointer;display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:7px 10px;border-radius:6px;border:1px solid transparent}
+.lv:hover{background:var(--surface)}
+.lv:focus-visible{outline:2px solid var(--accent)}
+.lv.cur{background:var(--surface);border-color:var(--line)}
+.lv .no{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.lv .nm{font-size:13.5px;font-weight:500;line-height:1.3}
+.lv .nm small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.stars{font-size:12px;letter-spacing:1px;color:var(--line);white-space:nowrap}
+.stars b{color:var(--accent);font-weight:400}
+.board{min-width:0;display:flex;flex-direction:column;gap:14px}
+.mission{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 18px}
+.mission h3{margin:0 0 4px;font-size:18px;text-wrap:balance}
+.mission .eyebrow{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.08em}
+.mission p{margin:0;max-width:62ch}
+.mission ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.mission li::marker{color:var(--accent)}
+.views{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line)}
+.card-h h4{margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-right:auto}
+.scroll{overflow-x:auto}
+.sheet svg{display:block;width:100%;min-width:560px;height:auto;background:var(--paper)}
+.panelbox{position:relative}
+.panelbox svg{display:block;width:100%;height:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:6px 12px;border-top:1px solid var(--line)}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:5px 11px;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible,.btn:focus-visible,.sw:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{all:unset;cursor:pointer;padding:5px 11px;font-size:13px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn[disabled]{opacity:.45;cursor:default}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tools .lbl{font-size:12px;color:var(--muted)}
+.sw{all:unset;cursor:pointer;width:20px;height:20px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.spacer{flex:1}
+.banner{margin:8px 12px 0;padding:8px 12px;border-radius:6px;font-size:13.5px;border:1px solid}
+.banner.bad{border-color:var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+.banner.info{border-color:var(--line);color:var(--fg);background:var(--bg)}
+.banner.ok{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,transparent)}
+.pop{position:absolute;z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:210px;font-size:13px}
+.pop select{font:inherit;padding:4px 6px;border-radius:5px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.pop .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pop .ends{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.report{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.report ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.report li{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:13.5px}
+.report li .ic{font-weight:700;font-family:var(--mono)}
+.report li.pass .ic{color:var(--ok)} .report li.fail .ic{color:var(--bad)} .report li.skip{color:var(--muted)}
+.report li .why{grid-column:2;color:var(--bad);font-size:12.5px}
+.score{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
+.score .on{color:var(--accent)} .score .off{color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;margin:0}
+footer.note{margin-top:18px;color:var(--muted);font-size:12px;max-width:80ch}
+/* SVG: 도면 */
+.s-ln{stroke:var(--ink);stroke-width:1.5;fill:none;stroke-linecap:round}
+.s-ln.s-sky{stroke:var(--sky)}
+.s-ln.s-fill{fill:var(--paper)}
+.s-ln.s-mot{stroke:var(--pink)}
+.s-ln.s-dash{stroke-dasharray:3 2}
+.s-ln.s-frame{stroke:var(--paper-edge);stroke-width:1}
+.s-term{fill:var(--paper);stroke:var(--ink);stroke-width:1.3}
+.s-dot{fill:var(--ink)}
+.s-nm{fill:var(--ink);font:600 11px var(--font)}
+.s-nm.s-in{font-size:9.5px}
+.s-nm.s-mt{fill:var(--pink)}
+.s-tn{fill:var(--muted);font:500 9px var(--mono)}
+.s-num{fill:var(--pink);font:600 10px var(--mono)}
+.s-hd{fill:var(--muted);font:600 10.5px var(--font);letter-spacing:.06em}
+.s-tb{fill:var(--ink);font:500 10px var(--font)}
+/* SVG: 판넬 */
+.plate{fill:var(--plate)} .zone{fill:var(--zone);stroke:var(--line)}
+.zone-t{fill:var(--muted);font:600 12px var(--font);letter-spacing:.08em}
+.rail{fill:var(--rail)} .hole{fill:var(--plate-2)}
+.dev{fill:var(--dev);stroke:var(--dev-edge);stroke-width:1.5}
+.dev2{fill:var(--dev-2);stroke:var(--dev-edge);stroke-width:1}
+.dt{fill:var(--dev-ink);font:700 14px var(--font)}
+.ds{fill:var(--dev-ink);font:500 11px var(--font);opacity:.8}
+.dm{fill:var(--dev-ink);font:500 10.5px var(--mono);opacity:.85}
+.nm{fill:var(--fg);font:600 13px var(--font)}
+.led{fill:#7d8a90;stroke:#3e474c;stroke-width:1}
+.led.r{fill:#ff3b30;filter:drop-shadow(0 0 4px #ff3b30)}
+.led.g{fill:#34d058;filter:drop-shadow(0 0 4px #34d058)}
+.led.y{fill:#ffc400;filter:drop-shadow(0 0 4px #ffc400)}
+.jumper{stroke:#c0862a;stroke-width:4;stroke-linecap:round}
+.knob{fill:#2b3236;stroke:#111;stroke-width:1}
+.knob-p{stroke:#fff;stroke-width:3;stroke-linecap:round}
+.act{cursor:pointer}
+.sim .act:hover .dev{stroke:var(--accent);stroke-width:2.5}
+.lens{stroke:#3e474c;stroke-width:2}
+.blade{fill:var(--dev-edge)}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin .6s linear infinite}
+.spin.rev{animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wave{animation:wave .5s ease-in-out infinite alternate}
+@keyframes wave{to{opacity:.2}}
+.term{cursor:pointer}
+.term .hit{fill:transparent}
+.term .screw{fill:#cfd6d9;stroke:#59646a;stroke-width:1.5}
+.term .x{stroke:#59646a;stroke-width:1.4}
+.term text{fill:var(--dev-ink);font:600 11.5px var(--mono)}
+.term:hover .screw{fill:#ffe2b8;stroke:var(--accent)}
+.term.sel .screw{fill:var(--accent);stroke:var(--accent)}
+.term.full .screw{stroke-dasharray:2 2}
+.term.hl .ring{stroke:var(--accent);stroke-width:3;fill:none;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{stroke-opacity:.2}}
+.pot{fill:none;stroke-width:3.5}
+.pot.L,.pot.R{stroke:var(--v-l)} .pot.N{stroke:var(--v-n)} .pot.S{stroke:var(--v-s)} .pot.T{stroke:var(--v-t)} .pot.P{stroke:var(--v-p)} .pot.M{stroke:var(--v-m)} .pot.X{stroke:#e0249b}
+.wire .hit{stroke:transparent;stroke-width:16;fill:none;cursor:pointer}
+.wire .ol{stroke:rgba(0,0,0,.45);stroke-width:6.5;fill:none;stroke-linecap:round}
+.wire .core{stroke-width:4;fill:none;stroke-linecap:round}
+.wire:hover .ol,.wire.hl .ol{stroke:var(--accent)}
+.flow{fill:none;stroke-width:2;stroke-dasharray:4 10;stroke-linecap:round;animation:flow .7s linear infinite;opacity:.9;stroke:#ffe6c8}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.tag rect{fill:var(--surface);stroke:var(--pink);stroke-width:1.2}
+.tag text{fill:var(--pink);font:600 10.5px var(--mono)}
+.preview{stroke:var(--accent);stroke-width:3;fill:none;stroke-dasharray:6 5;pointer-events:none}
+.viewtabs{display:none}
+.sim .act,[data-pb]{touch-action:none;-webkit-touch-callout:none}
+@media (prefers-reduced-motion: reduce){.spin,.flow,.wave,.term.hl .ring{animation:none}}
+@media (max-width:1250px){.views{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){
+  .game{grid-template-columns:minmax(0,1fr)}
+  .levels{position:static;flex-direction:row;overflow-x:auto;max-height:none;align-items:stretch}
+  .levels h2{writing-mode:vertical-rl;margin:0;padding:4px 2px;border-left:2px solid var(--accent)}
+  .lv{grid-template-columns:auto auto;min-width:150px}
+  .lv .stars{grid-column:1/-1}
+  .mission{grid-template-columns:minmax(0,1fr)}
+  .viewtabs{display:flex}
+  .viewtabs button{flex:1;text-align:center;padding:10px}
+  .views[data-show="panel"] .sheet,.views[data-show="sheet"] .panelcard{display:none}
+  .tools{position:sticky;top:env(safe-area-inset-top,0px);background:var(--surface);z-index:3}
+  .btn,.seg button{padding:8px 12px}
+  .sw{width:26px;height:26px}
+  header.top h1{font-size:19px}
+  .pop{position:fixed;left:12px!important;right:12px;top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom,0px));min-width:0}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>컨트롤박스 배선 연습</h1>
+    <span class="sub">도면을 보고 판넬 단자를 눌러 배선한 뒤, 전원을 넣어 동작을 확인하세요. 기초부터 전기기능사 실기 수준까지.</span>
+  </header>
+  <div class="game">
+    <nav class="levels" id="levels" aria-label="단계"></nav>
+    <section class="board">
+      <div class="mission" id="mission"></div>
+      <div class="seg viewtabs" role="group" aria-label="보기 전환"><button data-view="sheet" aria-pressed="false">도면 보기</button><button data-view="panel" aria-pressed="true">판넬 배선</button></div>
+      <div class="views" id="views" data-show="panel">
+        <div class="card sheet">
+          <div class="card-h"><h4>시퀀스 도면</h4><span style="font-size:12px;color:var(--muted)"><b style="color:var(--pink)">분홍</b> 넘버링</span></div>
+          <div class="scroll" id="sheet"></div>
+        </div>
+        <div class="card panelcard">
+          <div class="card-h">
+            <h4>판넬</h4>
+            <div class="seg" role="group" aria-label="판넬 크기"><button data-zoom="-1" aria-label="판넬 축소">－</button><button data-zoom="1" aria-label="판넬 확대">＋</button></div>
+            <div class="seg" role="group" aria-label="모드">
+              <button id="mWire" aria-pressed="true">배선</button>
+              <button id="mSim" aria-pressed="false">전원 투입</button>
+            </div>
+          </div>
+          <div class="tools" id="tools"></div>
+          <div id="banner"></div>
+          <div class="panelbox scroll" id="panelbox"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h4>동작 테스트 · 채점</h4></div>
+        <div class="report" id="report"></div>
+      </div>
+      <footer class="note">연습용 시뮬레이터예요. 단자 번호는 IEC 표기(코일 A1–A2, 보조접점 13–14 · 21–22, 과부하 95–96 · 97–98)와 8핀 소켓(코일 2–7)을 기준으로 했어요. 실제 시험이나 현장에서는 도면에 주어진 기구 내부결선도의 번호를 꼭 확인하세요.</footer>
+    </section>
+  </div>
+</div>
+
+<script>
+// ENGINE START
+const range=n=>Array.from({length:n},(_,i)=>i);
+const AC=['L','N','R','S','T'],PH=['R','S','T'];
+function rowT(specs,w,y,dir){const n=specs.length,sp=w/n;return specs.map((s,i)=>({id:s[0],lb:s[1]??s[0],x:Math.round(sp*(i+.5)),y,dir,fixed:!!s[2],desc:s[3]||''}));}
+const RELAY_T=(w,h,top,bot)=>[...rowT(top,w,18,-1),...rowT(bot,w,h-18,1)];
+const DEF={
+  ELB:c=>({w:120,h:140,terms:[...rowT([['1','1',1],['3','3',1]],120,18,-1),...rowT([['2','2·L',0,'ELB 2번: 2차측(부하측) L'],['4','4·N',0,'ELB 4번: 2차측(부하측) N']],120,122,1)]}),
+  MCCB:c=>({w:140,h:140,terms:[...rowT([['1','1',1],['3','3',1],['5','5',1]],140,18,-1),...rowT([['2','2·R',0,'MCCB 2번: R상 부하측'],['4','4·S',0,'MCCB 4번: S상 부하측'],['6','6·T',0,'MCCB 6번: T상 부하측']],140,122,1)]}),
+  FUSE:c=>({w:100,h:120,terms:[...rowT([['1','1',0,'퓨즈 F1 입력'],['3','3',0,'퓨즈 F2 입력']],100,18,-1),...rowT([['2','2',0,'퓨즈 F1 출력 (1번과 연결)'],['4','4',0,'퓨즈 F2 출력 (3번과 연결)']],100,102,1)],links:[['1','2'],['3','4']]}),
+  TB:c=>{const n=c.n,w=34*n+24;return{w,h:120,terms:[...rowT(range(n).map(i=>['L'+(i+1),'L',0,'L 공통 단자대 (점퍼로 전부 연결)']),w,18,-1),...rowT(range(n).map(i=>['N'+(i+1),'N',0,'N 공통 단자대 (점퍼로 전부 연결)']),w,102,1)],links:[range(n).map(i=>'L'+(i+1)),range(n).map(i=>'N'+(i+1))]}},
+  SMPS:c=>({w:170,h:130,terms:[...rowT([['L','L',0,'AC220V 입력 L'],['N','N',0,'AC220V 입력 N']],170,18,-1),...rowT([['M1','−V',0,'DC24V − 출력'],['M2','−V',0,'DC24V − 출력'],['P1','+V',0,'DC24V + 출력'],['P2','+V',0,'DC24V + 출력']],170,112,1)],links:[['M1','M2'],['P1','P2']]}),
+  RELAY:c=>({w:150,h:150,terms:RELAY_T(150,150,[['1','1',0,'공통(COM): 3번과 a접점, 4번과 b접점'],['2','2',0,'코일'],['3','3',0,'a접점: 코일이 여자되면 1번과 붙음'],['4','4',0,'b접점: 평소에 1번과 붙어 있음']],[['8','8',0,'공통(COM): 6번과 a접점, 5번과 b접점'],['7','7',0,'코일'],['6','6',0,'a접점: 코일이 여자되면 8번과 붙음'],['5','5',0,'b접점: 평소에 8번과 붙어 있음']])}),
+  TIMER:c=>({w:150,h:150,terms:RELAY_T(150,150,[['1','1',0,'순시 접점 공통: 3번 순시a, 4번 순시b'],['2','2',0,'코일(전원)'],['3','3',0,'순시 a: 코일 여자 즉시 1번과 붙음'],['4','4',0,'순시 b: 코일 여자 즉시 1번과 떨어짐']],[['8','8',0,'한시 접점 공통: 6번 한시a, 5번 한시b'],['7','7',0,'코일(전원)'],['6','6',0,'한시 a: 설정 시간이 지나면 8번과 붙음'],['5','5',0,'한시 b: 설정 시간이 지나면 8번과 떨어짐']])}),
+  FLICK:c=>({w:150,h:150,terms:RELAY_T(150,150,[['1','1',0,'사용 안 함'],['2','2',0,'코일(전원)'],['3','3',0,'사용 안 함'],['4','4',0,'사용 안 함']],[['8','8',0,'공통: 6번과 5번이 번갈아 붙음'],['7','7',0,'코일(전원)'],['6','6',0,'교대 접점 a'],['5','5',0,'교대 접점 b (평소 붙음)']])}),
+  MC:c=>({w:260,h:150,terms:RELAY_T(260,150,[['L1','L1',0,'주접점 입력 (1/L1)'],['L2','L2',0,'주접점 입력 (3/L2)'],['L3','L3',0,'주접점 입력 (5/L3)'],['13','13',0,'보조 a접점 (13–14)'],['21','21',0,'보조 b접점 (21–22)'],['31','31',0,'보조 b접점 (31–32)'],['43','43',0,'보조 a접점 (43–44)'],['A1','A1',0,'코일 A1']],
+    [['T1','T1',0,'주접점 출력 (2/T1)'],['T2','T2',0,'주접점 출력 (4/T2)'],['T3','T3',0,'주접점 출력 (6/T3)'],['14','14',0,'보조 a접점 (13–14)'],['22','22',0,'보조 b접점 (21–22)'],['32','32',0,'보조 b접점 (31–32)'],['44','44',0,'보조 a접점 (43–44)'],['A2','A2',0,'코일 A2']])}),
+  THR:c=>({w:180,h:140,terms:RELAY_T(180,140,[['L1','L1',0,'주회로 입력'],['L2','L2',0,'주회로 입력'],['L3','L3',0,'주회로 입력'],['95','95',0,'b접점 (95–96): 평소 붙음, 트립 시 떨어짐'],['97','97',0,'a접점 (97–98): 트립 시 붙음']],
+    [['T1','T1',0,'주회로 출력 → 전동기'],['T2','T2',0,'주회로 출력 → 전동기'],['T3','T3',0,'주회로 출력 → 전동기'],['96','96',0,'b접점 (95–96)'],['98','98',0,'a접점 (97–98)']]),links:[['L1','T1'],['L2','T2'],['L3','T3']]}),
+  SS:c=>({w:96,h:110,terms:rowT([['13','13',0,'a접점(NO)'],['14','14',0,'a접점(NO)']],96,18,-1)}),
+  PB:c=>({w:96,h:110,terms:rowT(c.nc?[['11','11',0,'b접점(NC)'],['12','12',0,'b접점(NC)']]:[['13','13',0,'a접점(NO)'],['14','14',0,'a접점(NO)']],96,18,-1)}),
+  LAMP:c=>({w:84,h:110,terms:rowT([['X1','X1'],['X2','X2']],84,18,-1)}),
+  BZ:c=>({w:84,h:110,terms:rowT([['X1','X1'],['X2','X2']],84,18,-1)}),
+  FAN:c=>({w:130,h:120,terms:rowT([['U1','U1'],['U2','U2']],130,18,-1)}),
+  MOTOR:c=>({w:200,h:125,terms:rowT([['FW','FW',0,'정회전(열림) 권선'],['RV','RV',0,'역회전(닫힘) 권선'],['COM','COM',0,'공통 → N']],200,18,-1)}),
+  MOTOR3:c=>({w:200,h:125,terms:rowT([['U','U',0,'R상이 들어가면 정회전'],['V','V',0,'S상'],['W','W',0,'T상']],200,18,-1)}),
+  MOTOR6:c=>({w:270,h:125,terms:rowT([['U1','U1'],['V1','V1'],['W1','W1'],['U2','U2',0,'U상 권선 끝'],['V2','V2',0,'V상 권선 끝'],['W2','W2',0,'W상 권선 끝']],270,18,-1)}),
+  LS:c=>({w:120,h:100,terms:rowT([['C','COM',0,'공통'],['NC','NC',0,'b접점: 끝에 닿으면 끊김'],['NO','NO',0,'a접점: 끝에 닿으면 붙음']],120,18,-1)}),
+};
+const defCache=new WeakMap();
+function D(c){if(!defCache.has(c))defCache.set(c,DEF[c.type](c));return defCache.get(c);}
+function UF(){const p=new Map();const f=k=>{if(!p.has(k))p.set(k,k);let r=k;while(p.get(r)!==r)r=p.get(r);let c=k;while(p.get(c)!==r){const n=p.get(c);p.set(c,r);c=n;}return r;};return{find:f,union:(a,b)=>{const x=f(a),y=f(b);if(x!==y)p.set(x,y);}};}
+function lsActuated(c,st){const p=st.pos[c.motor]??50;return c.end==='open'?p>=99.9:p<=0.1;}
+function dynLinks(c,st,coil){
+  switch(c.type){
+    case 'ELB':return st.brk?[['1','2'],['3','4']]:[];
+    case 'MCCB':return st.brk?[['1','2'],['3','4'],['5','6']]:[];
+    case 'RELAY':return coil[c.id]?[['1','3'],['8','6']]:[['1','4'],['8','5']];
+    case 'TIMER':{const up=coil[c.id]&&(st.tm[c.id]||0)>=c.t-1e-9;return [coil[c.id]?['1','3']:['1','4'],up?['8','6']:['8','5']];}
+    case 'FLICK':{const on=coil[c.id]&&Math.floor((st.fk[c.id]||0)/0.5+1e-9)%2===0;return [on?['8','6']:['8','5']];}
+    case 'MC':return coil[c.id]?[['L1','T1'],['L2','T2'],['L3','T3'],['13','14'],['43','44']]:[['21','22'],['31','32']];
+    case 'THR':return st.trip[c.id]?[['97','98']]:[['95','96']];
+    case 'SS':return st.sw[c.id]==='ON'?[['13','14']]:[];
+    case 'PB':return c.nc?(st.pb[c.id]?[]:[['11','12']]):(st.pb[c.id]?[['13','14']]:[]);
+    case 'LS':return lsActuated(c,st)?[['C','NO']]:[['C','NC']];
+  }
+  return [];
+}
+function allKeys(lv){const ks=[];for(const c of lv.comps)for(const t of D(c).terms)ks.push(c.id+'.'+t.id);return ks;}
+const COILT={RELAY:['2','7'],TIMER:['2','7'],FLICK:['2','7'],MC:['A1','A2']};
+function solve(lv,wires,st){
+  let coil={...st.coil};let r,conv=false,transient=null;
+  for(let it=0;it<40;it++){
+    const uf=UF();
+    for(const w of wires)uf.union(w.a,w.b);
+    for(const c of lv.comps){const d=D(c),k=t=>c.id+'.'+t;
+      (d.links||[]).forEach(g=>g.slice(1).forEach(t=>uf.union(k(g[0]),k(t))));
+      dynLinks(c,st,coil).forEach(([a,b])=>uf.union(k(a),k(b)));}
+    const tags=new Map();
+    const add=(key,t)=>{const rt=uf.find(key);if(!tags.has(rt))tags.set(rt,new Set());tags.get(rt).add(t);};
+    const has=(key,t)=>{const s=tags.get(uf.find(key));return !!s&&s.has(t);};
+    const acOf=key=>{const s=tags.get(uf.find(key));if(!s)return null;const a=[...s].filter(t=>AC.includes(t));return a.length===1?a[0]:null;};
+    const acx=(a,b)=>{const x=acOf(a),y=acOf(b);return !!x&&!!y&&x!==y;};
+    const dcx=(a,b)=>(has(a,'P')&&has(b,'M'))||(has(a,'M')&&has(b,'P'));
+    for(const c of lv.comps){if(c.type==='ELB'){add(c.id+'.1','L');add(c.id+'.3','N');}if(c.type==='MCCB'){add(c.id+'.1','R');add(c.id+'.3','S');add(c.id+'.5','T');}}
+    const smps={};
+    for(const c of lv.comps)if(c.type==='SMPS'){const on=!st.smpsTrip&&acx(c.id+'.L',c.id+'.N');smps[c.id]=on;if(on){add(c.id+'.P1','P');add(c.id+'.M1','M');}}
+    const nc={},burn=[];
+    for(const c of lv.comps){const ct=COILT[c.type];if(!ct)continue;const a=c.id+'.'+ct[0],b=c.id+'.'+ct[1];
+      if(c.type==='RELAY'&&c.coil==='DC24'){if(acx(a,b)&&!st.burnt[c.id])burn.push(c.id);nc[c.id]=!st.burnt[c.id]&&dcx(a,b);}
+      else nc[c.id]=acx(a,b);}
+    /* 계산 도중 한 번이라도 서로 다른 상이 맞닿으면 실제로는 그 순간 차단기가 떨어짐 */
+    if(!transient)for(const [rt,s] of tags){const acs=[...s].filter(t=>AC.includes(t));if(acs.length>=2){transient={tags:acs,rt,uf};break;}}
+    const same=Object.keys(nc).every(k=>nc[k]===!!coil[k]);
+    r={uf,tags,has,acOf,acx,smps,coil:nc,burn};
+    coil=nc;
+    if(same){conv=true;break;}
+  }
+  const faults=[];const keys=allKeys(lv);
+  const wired=new Set();wires.forEach(w=>{wired.add(w.a);wired.add(w.b);});
+  const inNet=rt=>keys.filter(k=>r.uf.find(k)===rt&&wired.has(k));
+  if(!conv)faults.push({type:'chatter'});
+  if(transient&&![...r.tags.values()].some(s=>[...s].filter(t=>AC.includes(t)).length>=2))
+    faults.push({type:'short',tags:transient.tags,keys:keys.filter(k=>transient.uf.find(k)===transient.rt&&wired.has(k))});
+  for(const [rt,s] of r.tags){const acs=[...s].filter(t=>AC.includes(t));
+    if(acs.length>=2)faults.push({type:'short',tags:acs,keys:inNet(rt)});
+    else if(s.has('P')&&s.has('M'))faults.push({type:'dcshort',keys:inNet(rt)});
+    if(acs.length&&(s.has('P')||s.has('M')))faults.push({type:'mix',keys:inNet(rt)});}
+  const loads={lamp:{},fan:{},motor:{},relay:r.coil};
+  for(const c of lv.comps){const k=t=>c.id+'.'+t;
+    if(c.type==='LAMP'||c.type==='BZ')loads.lamp[c.id]=r.acx(k('X1'),k('X2'));
+    if(c.type==='FAN')loads.fan[c.id]=r.acx(k('U1'),k('U2'));
+    if(c.type==='MOTOR'){const fw=r.acx(k('FW'),k('COM')),rv=r.acx(k('RV'),k('COM'));
+      if(fw&&rv)faults.push({type:'both',id:c.id});loads.motor[c.id]=fw&&rv?'BOTH':fw?'FW':rv?'RV':'STOP';}
+    if(c.type==='MOTOR3'){const a=['U','V','W'].map(t=>r.acOf(k(t)));
+      if(a.every(x=>!x))loads.motor[c.id]='STOP';
+      else if(a.every(x=>PH.includes(x))&&new Set(a).size===3){const i=a.map(x=>PH.indexOf(x));loads.motor[c.id]=(i[1]-i[0]+3)%3===1?'FW':'RV';}
+      else loads.motor[c.id]='PHASE';}
+    if(c.type==='MOTOR6'){const s=['U1','V1','W1'].map(t=>r.acOf(k(t)));const distinct=s.every(x=>PH.includes(x))&&new Set(s).size===3;
+      const f=t=>r.uf.find(k(t));const star=f('U2')===f('V2')&&f('V2')===f('W2')&&!r.tags.get(f('U2'));
+      const delta=r.acx(k('U1'),k('U2'))&&r.acx(k('V1'),k('V2'))&&r.acx(k('W1'),k('W2'));
+      loads.motor[c.id]=distinct&&delta?'D':distinct&&star?'Y':s.some(Boolean)&&!distinct?'PHASE':'STOP';}
+  }
+  r.burn.forEach(id=>faults.push({type:'burn',id}));
+  return {...r,loads,faults};
+}
+function tick(lv,wires,st,dt){
+  const r=solve(lv,wires,st);st.coil={...r.coil};
+  if(!r.faults.length){
+    for(const c of lv.comps){
+      if(c.type==='TIMER')st.tm[c.id]=r.coil[c.id]?(st.tm[c.id]||0)+dt:0;
+      if(c.type==='FLICK')st.fk[c.id]=r.coil[c.id]?(st.fk[c.id]||0)+dt:0;}
+    for(const id in r.loads.motor){const m=r.loads.motor[id];let p=st.pos[id]??50;
+      if(m==='FW')p+=30*dt;if(m==='RV')p-=30*dt;st.pos[id]=Math.max(0,Math.min(100,p));}}
+  return r;
+}
+function initState(lv,brk=true){const st={brk,sw:{},pb:{},coil:{},tm:{},fk:{},trip:{},pos:{},smpsTrip:false,burnt:{}};
+  for(const c of lv.comps){if(c.type==='SS')st.sw[c.id]='OFF';if(/^MOTOR/.test(c.type))st.pos[c.id]=50;}return st;}
+const MOT={FW:'정회전',RV:'역회전',STOP:'정지',BOTH:'정·역 동시',PHASE:'결상',Y:'Y 기동',D:'Δ 운전'};
+function termName(lv,key){const [cid,tid]=key.split('.');const c=lv.comps.find(x=>x.id===cid);const t=c&&D(c).terms.find(x=>x.id===tid);const lb=t?t.lb:tid;return cid+' '+(/^\d+$/.test(lb)?lb+'번':lb);}
+function brkName(lv){const b=lv.comps.find(c=>c.type==='ELB'||c.type==='MCCB');return b?b.type:'차단기';}
+function faultText(lv,f){const ks=f.keys&&f.keys.length?' ('+f.keys.slice(0,4).map(k=>termName(lv,k)).join(', ')+')':'';const B=brkName(lv);
+  switch(f.type){
+    case 'short':return `단락! 전압이 다른 두 선(${f.tags.join('·')})이 부하 없이 바로 이어졌어요${ks}. ${B}가 트립됐어요.`;
+    case 'dcshort':return 'SMPS 단락! +V와 −V가 바로 이어졌어요'+ks+'. SMPS 보호로 24V가 끊겼어요.';
+    case 'mix':return '혼촉! 24V 회로에 220V가 섞였어요'+ks+'. '+B+'가 트립됐어요.';
+    case 'both':return '정·역 동시 투입! '+f.id+' 모터 FW와 RV에 동시에 전원이 들어갔어요. 인터록을 확인하세요.';
+    case 'burn':return f.id+' 코일 소손! DC24V 코일에 AC220V가 걸렸어요.';
+    case 'chatter':return '채터링! 릴레이가 붙었다 떨어졌다를 반복해요. 자기 b접점으로 자기 코일을 끊고 있지 않은지 보세요.';
+  }return '이상 동작';}
+function runTests(lv,wires){
+  const st=initState(lv);const out=[];let failed=false;
+  for(const step of lv.tests){
+    if(failed){out.push({say:step.say,status:'skip'});continue;}
+    const s=step.set||{};if(s.sw)Object.assign(st.sw,s.sw);if(s.pb)Object.assign(st.pb,s.pb);if(s.trip)Object.assign(st.trip,s.trip);
+    const e=step.expect||{};const T=step.wait??0.4;let r,fault=null;const seen={};
+    for(let t=0;t<T-1e-9;t+=0.1){r=tick(lv,wires,st,0.1);if(r.faults.length){fault=r.faults[0];break;}
+      for(const id in e.blink||{}){(seen[id]=seen[id]||new Set()).add(!!r.loads.lamp[id]);}}
+    const why=[];
+    if(fault)why.push(faultText(lv,fault));
+    else{
+      for(const id in e.motor||{}){const a=r.loads.motor[id];if(a!==e.motor[id])why.push(`${id}: ${MOT[e.motor[id]]}이어야 하는데 ${MOT[a]} 상태예요`);}
+      for(const id in e.lamp||{}){const a=!!r.loads.lamp[id];if(a!==e.lamp[id])why.push(`${id}: ${e.lamp[id]?'켜져야':'꺼져야'} 하는데 ${a?'켜져':'꺼져'} 있어요`);}
+      for(const id in e.blink||{}){const s2=seen[id]||new Set();if(s2.size<2)why.push(`${id}: 깜빡여야 하는데 계속 ${s2.has(true)?'켜져':'꺼져'} 있어요`);}
+      for(const id in e.fan||{}){const a=!!r.loads.fan[id];if(a!==e.fan[id])why.push(`${id}: ${e.fan[id]?'돌아야':'멈춰야'} 하는데 ${a?'돌고':'멈춰'} 있어요`);}
+      for(const id in e.relay||{}){const a=!!r.loads.relay[id];if(a!==e.relay[id])why.push(`${id} 코일: ${e.relay[id]?'여자돼야':'떨어져야'} 하는데 ${a?'여자돼':'떨어져'} 있어요`);}
+    }
+    if(why.length){failed=true;out.push({say:step.say,status:'fail',why});}else out.push({say:step.say,status:'pass'});
+  }
+  return {pass:!failed,steps:out};
+}
+function staticUF(lv,pairs){const uf=UF();for(const c of lv.comps)(D(c).links||[]).forEach(g=>g.slice(1).forEach(t=>uf.union(c.id+'.'+g[0],c.id+'.'+t)));pairs.forEach(p=>uf.union(p[0]??p.a,p[1]??p.b));return uf;}
+function labelMap(lv){const uf=staticUF(lv,lv.ref),m=new Map();lv.ref.forEach(([a,b,l])=>{if(l)m.set(uf.find(a),l);});return k=>m.get(uf.find(k));}
+function numberingCheck(lv,wires){const lab=labelMap(lv);let need=0,ok=0;const bad=[];
+  for(const w of wires){const l=lab(w.a)||lab(w.b);if(!l)continue;need++;if(w.tag===l)ok++;else bad.push({w,l});}
+  return {need,ok,bad};}
+function diagnose(lv,wires){
+  const ru=staticUF(lv,lv.ref),uu=staticUF(lv,wires);
+  const wrong=wires.filter(w=>ru.find(w.a)!==ru.find(w.b));
+  const missing=lv.ref.filter(([a,b])=>uu.find(a)!==uu.find(b));
+  return {wrong,missing};
+}
+// ENGINE END
+
+/* ---------- 단계 정의 ---------- */
+const PWR4=[['ELB.2','TB1.L1','220L'],['ELB.4','TB1.N1','220N']];
+const SMPSIN=[['TB1.L2','SMPS.L','220L'],['TB1.N2','SMPS.N','220N']];
+const L4REF=[...PWR4,['TB1.L2','SF.13','220L'],['SF.14','RY2.1','C1-FW'],['RY2.4','RY1.2'],['RY1.7','TB1.N2','220N'],['TB1.L3','SR.13','220L'],['SR.14','RY1.1','C1-RV'],['RY1.4','RY2.2'],['RY2.7','TB1.N3','220N'],['TB1.L4','RY1.8','220L'],['RY1.8','RY2.8','220L'],['RY1.6','M1.FW','M-FW'],['RY2.6','M1.RV','M-RV'],['M1.COM','TB1.N4','220N']];
+/* 3상 공통: 전원 → MCCB → MC → THR → 전동기, 제어전원은 MCCB 2·6번에서 퓨즈로 */
+const MAIN1=(mc='MC')=>[['MCCB.2',mc+'.L1','R'],['MCCB.4',mc+'.L2','S'],['MCCB.6',mc+'.L3','T'],['MCCB.2','F.1','R'],['MCCB.6','F.3','T'],[mc+'.T1','THR.L1','U'],[mc+'.T2','THR.L2','V'],[mc+'.T3','THR.L3','W'],['THR.T1','M.U','U'],['THR.T2','M.V','V'],['THR.T3','M.W','W']];
+const P3=(x0=30)=>[{type:'MCCB',id:'MCCB',x:x0,y:40},{type:'FUSE',id:'F',x:x0+170,y:40},{type:'THR',id:'THR',x:x0+300,y:40}];
+const PB0=(x)=>({type:'PB',id:'PB0',nc:true,label:'PB0 정지',color:'#d8322a',x,y:440});
+const PBg=(id,label,x)=>({type:'PB',id,label,color:'#21a04b',x,y:440});
+const LAMPc=(id,label,color,x)=>({type:'LAMP',id,label,color,x,y:440});
+const RED='#ff4433',GRN='#2ad15a',YEL='#ffc400',WHT='#f4f1e6';
+
+const LEVELS=[
+ {grp:'기초',id:'l1',title:'램프 하나 켜기',sub:'L → 스위치 → 부하 → N',
+  text:'ELB 2차측에서 나온 L이 스위치를 지나 램프로 가고, 램프를 지난 전기가 N으로 돌아와야 불이 켜져요. 모든 회로의 기본 모양입니다.',
+  points:['a접점(13–14): 스위치를 ON으로 돌리면 붙는 접점','부하(램프)는 반드시 L과 N 사이에 들어가야 켜져요','L과 N을 부하 없이 바로 이으면 단락: ELB가 떨어져요'],
+  comps:[{type:'ELB',id:'ELB',x:60,y:40},{type:'SS',id:'SS1',label:'SS1 스위치',x:330,y:440},LAMPc('RL','RL 표시등',RED,480)],
+  ref:[['ELB.2','SS1.13','220L'],['SS1.14','RL.X1'],['RL.X2','ELB.4','220N']],
+  tests:[{say:'ELB 투입, SS1 OFF → RL 꺼짐',expect:{lamp:{RL:false}}},{say:'SS1 ON → RL 켜짐',set:{sw:{SS1:'ON'}},expect:{lamp:{RL:true}}},{say:'SS1 OFF → RL 꺼짐',set:{sw:{SS1:'OFF'}},expect:{lamp:{RL:false}}}],
+  sch:()=>sch1()},
+ {grp:'기초',id:'l2',title:'24V로 220V 부리기',sub:'제어회로와 동력회로 분리',
+  text:'SMPS로 만든 DC24V로 릴레이 코일을 켜고, 릴레이 접점으로 AC220V 환기팬을 돌려요. 스위치에는 24V만, 팬에는 220V만 흐르게 나누는 게 핵심이에요.',
+  points:['단자대 TB1의 L칸끼리, N칸끼리는 점퍼로 묶여 있어서 아무 칸이나 써도 같아요','8핀 릴레이: 코일 2–7, a접점 1–3 · 8–6, b접점 1–4 · 8–5','24V 선과 220V 선이 한 점에서 만나면 혼촉 사고예요'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:3,x:200,y:40},{type:'SMPS',id:'SMPS',x:370,y:40},{type:'RELAY',id:'RY1',coil:'DC24',x:200,y:240},{type:'SS',id:'SS1',label:'SS1 팬 운전',x:330,y:440},{type:'FAN',id:'FAN',label:'FAN 환기팬',x:480,y:585}],
+  ref:[...PWR4,...SMPSIN,['SMPS.P1','SS1.13','24VD+'],['SS1.14','RY1.2','S1'],['RY1.7','SMPS.M1','24VD-'],['TB1.L3','RY1.1','220L'],['RY1.3','FAN.U1','FAN'],['FAN.U2','TB1.N3','220N']],
+  tests:[{say:'ELB 투입, SS1 OFF → 팬 정지 (SMPS 정상)',expect:{fan:{FAN:false},relay:{RY1:false}}},{say:'SS1 ON → RY1 여자, 팬 회전',set:{sw:{SS1:'ON'}},expect:{relay:{RY1:true},fan:{FAN:true}}},{say:'SS1 OFF → 팬 정지',set:{sw:{SS1:'OFF'}},expect:{relay:{RY1:false},fan:{FAN:false}}}],
+  sch:()=>sch2()},
+ {grp:'기초',id:'l3',title:'자기유지',sub:'기동 PB · 정지 PB',
+  text:'기동 버튼에서 손을 떼도 릴레이가 계속 붙어 있게 만드는 회로예요. 릴레이 자기 a접점(1–3)을 기동 버튼과 병렬로 붙이면 됩니다. 운전 중엔 RL, 정지 중엔 GL이 켜져요.',
+  points:['PB 13–14는 a접점(누를 때 붙음), 11–12는 b접점(누를 때 떨어짐)','정지 PB1(b) → 기동 PB2(a) ∥ RY1 1–3 → RY1 코일','RL은 RY1 8–6(a), GL은 RY1 8–5(b)로 켜요'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'SMPS',id:'SMPS',x:400,y:40},{type:'RELAY',id:'RY1',coil:'DC24',x:200,y:240},{type:'PB',id:'PB1',nc:true,label:'PB1 정지',color:'#d8322a',x:150,y:440},{type:'PB',id:'PB2',label:'PB2 기동',color:'#21a04b',x:270,y:440},LAMPc('RL','RL 운전',RED,430),LAMPc('GL','GL 정지',GRN,540)],
+  ref:[...PWR4,...SMPSIN,['SMPS.P1','PB1.11','24VD+'],['PB1.12','PB2.13','S1'],['PB2.14','RY1.2','S2'],['RY1.7','SMPS.M1','24VD-'],['PB2.13','RY1.1','S1'],['RY1.3','RY1.2','S2'],['TB1.L3','RY1.8','220L'],['RY1.6','RL.X1','RL'],['RY1.5','GL.X1','GL'],['RL.X2','TB1.N3','220N'],['GL.X2','TB1.N4','220N']],
+  tests:[{say:'ELB 투입 → GL 켜짐, RL 꺼짐',expect:{lamp:{GL:true,RL:false}}},{say:'기동 PB2 누름 → RY1 여자, RL 켜짐',set:{pb:{PB2:true}},expect:{relay:{RY1:true},lamp:{RL:true,GL:false}}},{say:'PB2에서 손 뗌 → 자기유지로 계속 운전',set:{pb:{PB2:false}},expect:{relay:{RY1:true},lamp:{RL:true}}},{say:'정지 PB1 누름 → 정지, GL 켜짐',set:{pb:{PB1:true}},expect:{relay:{RY1:false},lamp:{RL:false,GL:true}}},{say:'PB1에서 손 뗌 → 정지 상태 유지',set:{pb:{PB1:false}},expect:{relay:{RY1:false},lamp:{RL:false,GL:true}}}],
+  sch:()=>sch3()},
+ {grp:'중급',id:'l4',title:'인터록 정·역',sub:'상대 b접점으로 동시 투입 막기',
+  text:'SF(정회전), SR(역회전) 스위치로 개폐기 모터를 돌려요. 각 릴레이 코일 앞에 상대 릴레이의 b접점(1–4)을 넣어서 둘이 동시에 붙지 못하게 막아요.',
+  points:['인터록 = 상대 릴레이의 b접점을 내 코일 앞에 직렬로','RY1 8번에 L을 받고, RY1 8번에서 RY2 8번으로 건너선을 쳐요','둘 다 켜도 먼저 붙은 쪽만 돌아야 정답'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'RELAY',id:'RY1',coil:'AC220',x:200,y:240},{type:'RELAY',id:'RY2',coil:'AC220',x:400,y:240},{type:'SS',id:'SF',label:'SF 정회전',x:150,y:440},{type:'SS',id:'SR',label:'SR 역회전',x:270,y:440},{type:'MOTOR',id:'M1',label:'M1 개폐기 모터',x:420,y:585}],
+  ref:L4REF,
+  tests:[{say:'모두 OFF → 모터 정지',expect:{motor:{M1:'STOP'}}},{say:'SF ON → 정회전',set:{sw:{SF:'ON'}},expect:{motor:{M1:'FW'}}},{say:'SF OFF → 정지',set:{sw:{SF:'OFF'}},expect:{motor:{M1:'STOP'}}},{say:'SR ON → 역회전',set:{sw:{SR:'ON'}},expect:{motor:{M1:'RV'}}},{say:'SR 켠 채로 SF도 ON → 인터록으로 역회전 유지',set:{sw:{SF:'ON'}},expect:{motor:{M1:'RV'},relay:{RY1:false}}},{say:'SR OFF → 정회전으로 넘어감',set:{sw:{SR:'OFF'}},expect:{motor:{M1:'FW'}}},{say:'SF OFF → 정지',set:{sw:{SF:'OFF'}},expect:{motor:{M1:'STOP'}}}],
+  sch:()=>sch4(false)},
+ {grp:'중급',id:'l5',title:'리밋스위치',sub:'끝까지 가면 자동 정지',
+  text:'개폐기가 끝까지 열리거나 닫히면 리밋스위치 b접점(COM–NC)이 끊어서 모터를 세워요. 스마트팜 개폐기 판넬에서 흔히 쓰는 구조예요.',
+  points:['리밋스위치는 코일과 N 사이에 직렬로 들어가요','리밋스위치 단자: COM(공통), NC(b접점), NO(a접점)','LS-OP는 끝까지 열리면, LS-CL은 끝까지 닫히면 끊겨요'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'RELAY',id:'RY1',coil:'AC220',x:200,y:240},{type:'RELAY',id:'RY2',coil:'AC220',x:400,y:240},{type:'SS',id:'SF',label:'SF 정회전',x:150,y:440},{type:'SS',id:'SR',label:'SR 역회전',x:270,y:440},{type:'MOTOR',id:'M1',label:'M1 개폐기 모터',x:400,y:585},{type:'LS',id:'LSO',label:'LS-OP 열림끝',motor:'M1',end:'open',x:640,y:590},{type:'LS',id:'LSC',label:'LS-CL 닫힘끝',motor:'M1',end:'close',x:790,y:590}],
+  ref:L4REF.filter(w=>!(w[0]==='RY1.7'||w[0]==='RY2.7')).concat([['RY1.7','LSO.C'],['LSO.NC','TB1.N2','220N'],['RY2.7','LSC.C'],['LSC.NC','TB1.N3','220N']]),
+  tests:[{say:'모두 OFF → 정지',expect:{motor:{M1:'STOP'}}},{say:'SF ON → 정회전',set:{sw:{SF:'ON'}},expect:{motor:{M1:'FW'}}},{say:'3초 기다림 → 끝까지 열리면 LS-OP가 끊어서 정지',wait:3,expect:{motor:{M1:'STOP'},relay:{RY1:false}}},{say:'SF OFF, SR ON → 역회전',set:{sw:{SF:'OFF',SR:'ON'}},expect:{motor:{M1:'RV'}}},{say:'4초 기다림 → 끝까지 닫히면 LS-CL이 끊어서 정지',wait:4,expect:{motor:{M1:'STOP'},relay:{RY2:false}}}],
+  sch:()=>sch4(true)},
+ {grp:'중급',id:'t1',title:'타이머 ① 지연 동작',sub:'ON 딜레이 · 한시 a접점',
+  text:'기동하면 RL은 바로 켜지고, YL은 타이머 설정 시간(3초)이 지난 뒤에 켜져요. 타이머 코일에 전원이 들어가고 시간이 다 차면 한시 접점이 움직여요.',
+  points:['타이머 8핀: 코일 2–7, 순시 a 1–3 · 순시 b 1–4','한시 a 8–6: 시간이 지나면 붙음, 한시 b 8–5: 시간이 지나면 떨어짐','타이머 코일과 RL은 RY1 8–6 뒤에 병렬로'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'RELAY',id:'RY1',coil:'AC220',x:200,y:240},{type:'TIMER',id:'T',t:3,x:400,y:240},PB0(130),PBg('PB1','PB1 기동',240),LAMPc('RL','RL 운전',RED,370),LAMPc('YL','YL 지연',YEL,480)],
+  ref:[...PWR4,['TB1.L2','PB0.11','220L'],['PB0.12','PB1.13'],['PB1.13','RY1.1'],['PB1.14','RY1.2'],['RY1.3','RY1.2'],['RY1.7','TB1.N2','220N'],['TB1.L3','RY1.8','220L'],['RY1.6','T.2'],['RY1.6','RL.X1'],['T.7','TB1.N3','220N'],['RL.X2','T.7','220N'],['TB1.L4','T.8','220L'],['T.6','YL.X1'],['YL.X2','TB1.N4','220N']],
+  tests:[{say:'ELB 투입 → 모두 꺼짐',expect:{lamp:{RL:false,YL:false}}},{say:'기동 PB1 누름 → RY1 여자, RL 바로 켜짐',set:{pb:{PB1:true}},expect:{relay:{RY1:true,T:true},lamp:{RL:true,YL:false}}},{say:'PB1 뗌, 1초 → YL 아직 꺼짐',set:{pb:{PB1:false}},wait:1,expect:{lamp:{RL:true,YL:false}}},{say:'2.5초 더 → 3초가 지나 YL 켜짐',wait:2.5,expect:{lamp:{YL:true}}},{say:'정지 PB0 → 모두 꺼짐, 타이머 리셋',set:{pb:{PB0:true}},expect:{lamp:{RL:false,YL:false},relay:{T:false}}},{say:'PB0 뗌 → 꺼진 상태 유지',set:{pb:{PB0:false}},expect:{lamp:{RL:false,YL:false}}}],
+  sch:()=>schT1()},
+ {grp:'중급',id:'t2',title:'타이머 ② 일정 시간 운전',sub:'한시 b접점으로 자동 정지',
+  text:'기동 버튼을 누르면 팬이 5초 동안만 돌고 저절로 멈춰요. 자기유지 회로에 타이머 한시 b접점(8–5)을 직렬로 넣어서, 시간이 다 되면 자기유지가 풀리게 만드는 회로예요.',
+  points:['PB0 → 타이머 한시 b(8–5) → PB1 ∥ RY1 1–3 → RY1 코일','타이머 코일은 RY1 코일과 병렬로','시간이 다 되면 RY1이 떨어지고, 타이머도 꺼지면서 리셋돼요'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'RELAY',id:'RY1',coil:'AC220',x:200,y:240},{type:'TIMER',id:'T',t:5,x:400,y:240},PB0(130),PBg('PB1','PB1 기동',240),LAMPc('GL','GL 정지',GRN,370),{type:'FAN',id:'FAN',label:'FAN 환기팬',x:480,y:585}],
+  ref:[...PWR4,['TB1.L2','PB0.11','220L'],['PB0.12','T.8'],['T.5','PB1.13'],['PB1.13','RY1.1'],['PB1.14','RY1.2'],['RY1.3','RY1.2'],['RY1.3','T.2'],['RY1.7','TB1.N2','220N'],['T.7','RY1.7','220N'],['TB1.L3','RY1.8','220L'],['RY1.6','FAN.U1'],['FAN.U2','TB1.N3','220N'],['RY1.5','GL.X1'],['GL.X2','TB1.N4','220N']],
+  tests:[{say:'ELB 투입 → GL 켜짐, 팬 정지',expect:{lamp:{GL:true},fan:{FAN:false}}},{say:'기동 PB1 누름 → 팬 회전',set:{pb:{PB1:true}},expect:{fan:{FAN:true},lamp:{GL:false}}},{say:'PB1 뗌, 2초 → 계속 회전',set:{pb:{PB1:false}},wait:2,expect:{fan:{FAN:true}}},{say:'3.5초 더 → 5초가 지나 자동 정지',wait:3.5,expect:{fan:{FAN:false},lamp:{GL:true},relay:{RY1:false}}},{say:'다시 PB1 → 재기동',set:{pb:{PB1:true}},expect:{fan:{FAN:true}}},{say:'PB1 뗌, 정지 PB0 → 바로 정지',set:{pb:{PB1:false,PB0:true}},expect:{fan:{FAN:false}}}],
+  sch:()=>schT2()},
+ {grp:'중급',id:'t3',title:'플리커 경보',sub:'YL · 부저 번갈아 동작',
+  text:'이상 신호(SS1)가 들어오면 플리커 릴레이(FR)가 8–6, 8–5 접점을 번갈아 붙여서 경보등과 부저가 교대로 울려요. 전기기능사 실기에서 자주 나오는 경보 회로예요.',
+  points:['FR 코일 2–7, 교대 접점 공통 8번 → 6번 · 5번','FR 8번 공통에도 전원(코일과 같은 쪽)을 넣어야 해요','FR 코일이 꺼지면 접점도 전원이 없으니 경보가 멈춰요'],
+  comps:[{type:'ELB',id:'ELB',x:40,y:40},{type:'TB',id:'TB1',n:4,x:200,y:40},{type:'FLICK',id:'FR',x:200,y:240},{type:'SS',id:'SS1',label:'SS1 이상 신호',x:130,y:440},LAMPc('YL','YL 경보',YEL,270),{type:'BZ',id:'BZ',label:'BZ 부저',x:380,y:440}],
+  ref:[...PWR4,['TB1.L2','SS1.13','220L'],['SS1.14','FR.2'],['FR.2','FR.8'],['FR.7','TB1.N2','220N'],['FR.6','YL.X1'],['FR.5','BZ.X1'],['YL.X2','TB1.N3','220N'],['BZ.X2','TB1.N4','220N']],
+  tests:[{say:'ELB 투입, SS1 OFF → 경보 없음',expect:{lamp:{YL:false,BZ:false}}},{say:'SS1 ON, 1.5초 → YL과 BZ가 번갈아 동작',set:{sw:{SS1:'ON'}},wait:1.5,expect:{blink:{YL:true,BZ:true}}},{say:'SS1 OFF → 경보 멈춤',set:{sw:{SS1:'OFF'}},expect:{lamp:{YL:false,BZ:false}}}],
+  sch:()=>schT3()},
+ {grp:'실기 · 전기기능사',id:'e1',title:'3상 전동기 기동·정지',sub:'MCCB · MC · THR · 표시등',
+  text:'전기기능사 실기의 기본형이에요. 주회로는 MCCB → MC 주접점 → THR → 전동기, 제어회로는 MCCB 2·6번(R·T)에서 퓨즈를 거쳐 220V로 만들어요. 과부하로 THR이 트립되면 전동기가 서고 YL이 켜져요.',
+  points:['제어회로 R선: F → THR 95–96(b) → PB0 → PB1 ∥ MC 13–14 → MC 코일 A1','T선은 MC A2 → RL → GL → YL 순서로 건너 배선','전원 투입 모드에서 THR을 누르면 과부하 트립을 시험할 수 있어요'],
+  comps:[...P3(),{type:'MC',id:'MC',x:30,y:240},PB0(30),PBg('PB1','PB1 기동',140),LAMPc('RL','RL 운전',RED,260),LAMPc('GL','GL 정지',GRN,360),LAMPc('YL','YL 트립',YEL,460),{type:'MOTOR3',id:'M',label:'M 3상 유도전동기',x:400,y:585}],
+  ref:[...MAIN1(),['F.2','THR.95','R'],['THR.96','PB0.11'],['PB0.12','PB1.13'],['PB1.13','MC.13'],['PB1.14','MC.A1'],['MC.14','MC.A1'],['F.4','MC.A2','T'],['F.2','MC.43','R'],['MC.43','MC.21','R'],['MC.44','RL.X1'],['MC.22','GL.X1'],['THR.95','THR.97','R'],['THR.98','YL.X1'],['MC.A2','RL.X2','T'],['RL.X2','GL.X2','T'],['GL.X2','YL.X2','T']],
+  tests:[{say:'MCCB 투입 → GL 켜짐, 전동기 정지',expect:{lamp:{GL:true,RL:false,YL:false},motor:{M:'STOP'}}},{say:'기동 PB1 누름 → MC 여자, 전동기 운전, RL',set:{pb:{PB1:true}},expect:{relay:{MC:true},motor:{M:'FW'},lamp:{RL:true,GL:false}}},{say:'PB1 뗌 → 자기유지로 계속 운전',set:{pb:{PB1:false}},expect:{motor:{M:'FW'}}},{say:'정지 PB0 누름 → 정지, GL',set:{pb:{PB0:true}},expect:{motor:{M:'STOP'},lamp:{GL:true,RL:false}}},{say:'PB0 뗌, PB1로 다시 기동',set:{pb:{PB0:false,PB1:true}},expect:{motor:{M:'FW'}}},{say:'PB1 뗌, 과부하로 THR 트립 → 정지, YL 켜짐',set:{pb:{PB1:false},trip:{THR:true}},expect:{motor:{M:'STOP'},lamp:{YL:true,RL:false}}}],
+  sch:()=>schE1()},
+ {grp:'실기 · 전기기능사',id:'e2',title:'3상 정·역 운전',sub:'상 바꾸기 + 인터록',
+  text:'MC1은 R·S·T를 그대로, MC2는 R상과 T상을 바꿔서 전동기에 넣어요. 두 상을 바꾸면 회전 방향이 반대가 돼요. 두 MC가 동시에 붙으면 R–T 단락이니 MC 보조 b접점으로 인터록을 꼭 넣으세요.',
+  points:['주회로: MC2 T1 → THR L3, MC2 T3 → THR L1 (R↔T 교차)','정회전: PB1 ∥ MC1 13–14 → MC2 21–22(b) → MC1 코일','역회전: PB2 ∥ MC2 13–14 → MC1 21–22(b) → MC2 코일','GL은 MC1 31–32와 MC2 31–32를 직렬로 (둘 다 꺼졌을 때만)'],
+  comps:[...P3(),{type:'MC',id:'MC1',x:30,y:240},{type:'MC',id:'MC2',x:330,y:240},PB0(30),PBg('PB1','PB1 정회전',135),PBg('PB2','PB2 역회전',240),LAMPc('RL1','RL1 정회전',RED,350),LAMPc('RL2','RL2 역회전',WHT,445),LAMPc('GL','GL 정지',GRN,540),{type:'MOTOR3',id:'M',label:'M 3상 유도전동기',x:640,y:585}],
+  ref:[['MCCB.2','MC1.L1','R'],['MCCB.4','MC1.L2','S'],['MCCB.6','MC1.L3','T'],['MCCB.2','F.1','R'],['MCCB.6','F.3','T'],['MC1.L1','MC2.L1','R'],['MC1.L2','MC2.L2','S'],['MC1.L3','MC2.L3','T'],
+    ['MC1.T1','THR.L1','U'],['MC1.T2','THR.L2','V'],['MC1.T3','THR.L3','W'],['MC2.T1','THR.L3','W'],['MC2.T2','THR.L2','V'],['MC2.T3','THR.L1','U'],['THR.T1','M.U','U'],['THR.T2','M.V','V'],['THR.T3','M.W','W'],
+    ['F.2','THR.95','R'],['THR.96','PB0.11'],['PB0.12','PB1.13'],['PB0.12','PB2.13'],['PB1.13','MC1.13'],['PB2.13','MC2.13'],['PB1.14','MC2.21'],['MC1.14','PB1.14'],['MC2.22','MC1.A1'],['PB2.14','MC1.21'],['MC2.14','PB2.14'],['MC1.22','MC2.A1'],
+    ['F.4','MC1.A2','T'],['MC1.A2','MC2.A2','T'],['MC2.A2','RL1.X2','T'],['RL1.X2','RL2.X2','T'],['RL2.X2','GL.X2','T'],
+    ['F.2','MC1.43','R'],['MC1.43','MC2.43','R'],['MC2.43','MC1.31','R'],['MC1.44','RL1.X1'],['MC2.44','RL2.X1'],['MC1.32','MC2.31'],['MC2.32','GL.X1']],
+  tests:[{say:'MCCB 투입 → GL 켜짐, 정지',expect:{lamp:{GL:true},motor:{M:'STOP'}}},{say:'PB1 누름 → 정회전, RL1',set:{pb:{PB1:true}},expect:{motor:{M:'FW'},lamp:{RL1:true,GL:false}}},{say:'PB1 뗌 → 정회전 유지',set:{pb:{PB1:false}},expect:{motor:{M:'FW'}}},{say:'정회전 중 PB2 누름 → 인터록으로 무시',set:{pb:{PB2:true}},expect:{motor:{M:'FW'},relay:{MC2:false}}},{say:'PB2 뗌, 정지 PB0 → 정지, GL',set:{pb:{PB2:false,PB0:true}},expect:{motor:{M:'STOP'},lamp:{GL:true}}},{say:'PB0 뗌, PB2 누름 → 역회전, RL2',set:{pb:{PB0:false,PB2:true}},expect:{motor:{M:'RV'},lamp:{RL2:true,RL1:false}}},{say:'PB2 뗌, THR 트립 → 정지',set:{pb:{PB2:false},trip:{THR:true}},expect:{motor:{M:'STOP'}}}],
+  sch:()=>schE2()},
+ {grp:'실기 · 전기기능사',id:'e3',title:'타이머 정지 + 경보',sub:'한시 b · 플리커 · 부저',
+  text:'기동하면 전동기가 돌고 5초 뒤 타이머가 자동으로 세워요. 운전 중 과부하로 THR이 트립되면 THR 97–98(a)이 붙으면서 플리커 릴레이가 YL과 부저를 번갈아 울려요. 지금까지 배운 걸 합친 실기형 회로예요.',
+  points:['R → THR 95–96 → PB0 → PB1 ∥ MC 13–14 → 타이머 한시 b(8–5) → MC 코일 ∥ 타이머 코일','경보: THR 97 → 98 → FR 코일, FR 8번 공통에도 같은 전원','T선은 MC A2 → 타이머 7 → RL → GL → YL → BZ → FR 7 순서로 건너 배선'],
+  comps:[...P3(),{type:'TIMER',id:'TM',t:5,x:540,y:40},{type:'FLICK',id:'FR',x:720,y:40},{type:'MC',id:'MC',x:30,y:240},PB0(30),PBg('PB1','PB1 기동',135),LAMPc('RL','RL 운전',RED,250),LAMPc('GL','GL 정지',GRN,345),LAMPc('YL','YL 경보',YEL,440),{type:'BZ',id:'BZ',label:'BZ 부저',x:535,y:440},{type:'MOTOR3',id:'M',label:'M 3상 유도전동기',x:640,y:585}],
+  ref:[...MAIN1(),['F.2','THR.95','R'],['THR.96','PB0.11'],['PB0.12','PB1.13'],['PB1.13','MC.13'],['PB1.14','TM.8'],['MC.14','PB1.14'],['TM.5','MC.A1'],['MC.A1','TM.2'],
+    ['F.4','MC.A2','T'],['MC.A2','TM.7','T'],['TM.7','RL.X2','T'],['RL.X2','GL.X2','T'],['GL.X2','YL.X2','T'],['YL.X2','BZ.X2','T'],['BZ.X2','FR.7','T'],
+    ['F.2','MC.43','R'],['MC.43','MC.21','R'],['MC.44','RL.X1'],['MC.22','GL.X1'],['THR.95','THR.97','R'],['THR.98','FR.2'],['FR.2','FR.8'],['FR.6','YL.X1'],['FR.5','BZ.X1']],
+  tests:[{say:'MCCB 투입 → GL 켜짐, 정지',expect:{lamp:{GL:true,RL:false},motor:{M:'STOP'}}},{say:'PB1 누름 → 운전, RL',set:{pb:{PB1:true}},expect:{motor:{M:'FW'},lamp:{RL:true}}},{say:'PB1 뗌, 2초 → 계속 운전',set:{pb:{PB1:false}},wait:2,expect:{motor:{M:'FW'}}},{say:'3.5초 더 → 타이머(5초)로 자동 정지',wait:3.5,expect:{motor:{M:'STOP'},lamp:{GL:true},relay:{MC:false}}},{say:'PB1로 다시 기동',set:{pb:{PB1:true}},expect:{motor:{M:'FW'}}},{say:'PB1 뗌, THR 트립 → 정지, YL과 BZ 교대 경보',set:{pb:{PB1:false},trip:{THR:true}},wait:1.5,expect:{motor:{M:'STOP'},blink:{YL:true,BZ:true}}}],
+  sch:()=>schE3()},
+ {grp:'실기 · 전기기능사',id:'e4',title:'Y-Δ 기동',sub:'MCM · MCS · MCD · 타이머',
+  text:'큰 전동기는 Y로 기동해서 전류를 줄였다가, 타이머 시간이 지나면 Δ로 바꿔 운전해요. MCM은 계속 붙어 있고, 처음엔 MCS(Y), 4초 뒤엔 MCD(Δ)가 붙어요. MCS와 MCD가 동시에 붙으면 단락이니 서로 b접점으로 인터록하세요.',
+  points:['전동기 단자 6개: U1·V1·W1(권선 시작), U2·V2·W2(권선 끝)','MCS: U2·V2·W2를 한 점으로 묶음 (T1–T2–T3 점퍼) → Y 결선','MCD: U2→V1, V2→W1, W2→U1 상으로 연결 → Δ 결선','제어: 타이머 한시 b(8–5) → MCD b → MCS 코일 / 한시 a(8–6) → MCS b → MCD 코일'],
+  comps:[...P3(),{type:'TIMER',id:'TM',t:4,x:540,y:40},{type:'MC',id:'MCM',x:30,y:240},{type:'MC',id:'MCS',x:320,y:240},{type:'MC',id:'MCD',x:610,y:240},PB0(30),PBg('PB1','PB1 기동',135),LAMPc('RL','RL Δ운전',RED,250),LAMPc('GL','GL 정지',GRN,345),{type:'MOTOR6',id:'M',label:'M 3상 (6단자)',x:380,y:585}],
+  ref:[['MCCB.2','MCM.L1','R'],['MCCB.4','MCM.L2','S'],['MCCB.6','MCM.L3','T'],['MCCB.2','F.1','R'],['MCCB.6','F.3','T'],
+    ['MCM.T1','THR.L1','U1'],['MCM.T2','THR.L2','V1'],['MCM.T3','THR.L3','W1'],['THR.T1','M.U1','U1'],['THR.T2','M.V1','V1'],['THR.T3','M.W1','W1'],
+    ['M.U2','MCS.L1','U2'],['M.V2','MCS.L2','V2'],['M.W2','MCS.L3','W2'],['MCS.T1','MCS.T2'],['MCS.T2','MCS.T3'],
+    ['THR.T2','MCD.L1','V1'],['THR.T3','MCD.L2','W1'],['THR.T1','MCD.L3','U1'],['MCD.T1','M.U2','U2'],['MCD.T2','M.V2','V2'],['MCD.T3','M.W2','W2'],
+    ['F.2','THR.95','R'],['THR.96','PB0.11'],['PB0.12','PB1.13'],['PB1.13','MCM.13'],['PB1.14','MCM.A1'],['MCM.14','PB1.14'],['MCM.A1','TM.2'],['TM.2','TM.8'],
+    ['TM.5','MCD.21'],['MCD.22','MCS.A1'],['TM.6','MCS.21'],['MCS.22','MCD.A1'],
+    ['F.4','MCM.A2','T'],['MCM.A2','TM.7','T'],['TM.7','MCS.A2','T'],['MCS.A2','MCD.A2','T'],['MCD.A2','RL.X2','T'],['RL.X2','GL.X2','T'],
+    ['F.2','MCD.43','R'],['MCD.43','MCM.31','R'],['MCD.44','RL.X1'],['MCM.32','GL.X1']],
+  tests:[{say:'MCCB 투입 → GL 켜짐, 정지',expect:{lamp:{GL:true},motor:{M:'STOP'}}},{say:'PB1 누름 → MCM + MCS, Y 기동',set:{pb:{PB1:true}},expect:{motor:{M:'Y'},relay:{MCM:true,MCS:true,MCD:false}}},{say:'PB1 뗌, 2초 → Y 기동 유지',set:{pb:{PB1:false}},wait:2,expect:{motor:{M:'Y'}}},{say:'2.5초 더 → 4초가 지나 Δ 운전, RL',wait:2.5,expect:{motor:{M:'D'},relay:{MCS:false,MCD:true},lamp:{RL:true}}},{say:'정지 PB0 → 정지, GL',set:{pb:{PB0:true}},expect:{motor:{M:'STOP'},lamp:{GL:true,RL:false}}},{say:'PB0 뗌, PB1 → 다시 Y 기동',set:{pb:{PB0:false,PB1:true}},expect:{motor:{M:'Y'}}},{say:'PB1 뗌, THR 트립 → 정지',set:{pb:{PB1:false},trip:{THR:true}},expect:{motor:{M:'STOP'}}}],
+  sch:()=>schE4()},
+];
+
+/* ---------- 도면 그리기 ---------- */
+const S={
+  l:(x1,y1,x2,y2,c='')=>`<line class="s-ln ${c}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`,
+  p:(d,c='')=>`<path class="s-ln ${c}" d="${d}"/>`,
+  t:(x,y,s,c='s-nm',a='start')=>`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}">${s}</text>`,
+  o:(x,y)=>`<circle class="s-term" cx="${x}" cy="${y}" r="3.2"/>`,
+  d:(x,y)=>`<circle class="s-dot" cx="${x}" cy="${y}" r="3.2"/>`,
+  n:(x,y,s,a='end')=>`<text class="s-num" x="${x}" y="${y}" text-anchor="${a}">${s}</text>`,
+};
+const NCK=['nc','pbnc','ls','tnc'];
+function E(o,x,y,c=''){const [a,b]=o.t||[];const nc=NCK.includes(o.k);let s='';
+  const tx=nc?x+7:x-8,ta=nc?'start':'end';
+  const tn=(a?S.t(tx,y+12,a,'s-tn',ta):'')+(b?S.t(tx,y+39,b,'s-tn',ta):'');
+  const isC=o.k==='coil';
+  const nm=o.n?(isC?S.t(x,y+24,o.n,'s-nm s-in','middle'):S.t(x+(nc?28:24),y+24,o.n)):'';
+  const NO=()=>S.l(x,y,x,y+7,c)+S.o(x,y+10)+S.o(x,y+30)+S.l(x,y+33,x,y+40,c)+S.l(x,y+27,x+11,y+10);
+  const NC=()=>S.l(x,y,x,y+7,c)+S.o(x,y+10)+S.o(x,y+30)+S.l(x,y+33,x,y+40,c)+S.l(x,y+27,x-12,y+6)+S.l(x-2,y+10,x-13,y+10);
+  switch(o.k){
+    case 'no':s=NO();break;
+    case 'ss':s=NO()+S.l(x+6,y+19,x+17,y+19,'s-dash')+S.p(`M${x+14} ${y+13} L${x+18} ${y+13} L${x+18} ${y+25}`);break;
+    case 'pbno':s=NO()+S.l(x+6,y+19,x+18,y+19,'s-dash')+S.l(x+18,y+13,x+18,y+25);break;
+    case 'tno':s=NO()+S.p(`M${x+9} ${y+13} Q${x+17} ${y+19} ${x+9} ${y+25}`);break;
+    case 'nc':s=NC();break;
+    case 'tnc':s=NC()+S.p(`M${x-9} ${y+15} Q${x-17} ${y+21} ${x-9} ${y+27}`);break;
+    case 'pbnc':s=NC()+S.l(x-7,y+19,x-21,y+19,'s-dash')+S.l(x-21,y+13,x-21,y+25);break;
+    case 'ls':s=NC()+S.p(`M${x+5} ${y+21} L${x+16} ${y+15} L${x+16} ${y+27} Z`);break;
+    case 'coil':s=S.l(x,y,x,y+4,c)+`<circle class="s-ln s-fill" cx="${x}" cy="${y+20}" r="16"/>`+S.l(x,y+36,x,y+40,c);break;
+    case 'lamp':s=S.l(x,y,x,y+6,c)+`<circle class="s-ln s-fill" cx="${x}" cy="${y+20}" r="14"/>`+S.l(x-10,y+10,x+10,y+30)+S.l(x+10,y+10,x-10,y+30)+S.l(x,y+34,x,y+40,c);break;
+    case 'bz':s=S.l(x,y,x,y+10,c)+S.p(`M${x-14} ${y+28} A14 14 0 0 1 ${x+14} ${y+28} Z`,'s-fill')+S.l(x,y+28,x,y+40,c);break;
+    case 'fan':s=S.l(x,y,x,y+4,c)+`<circle class="s-ln s-fill s-mot" cx="${x}" cy="${y+20}" r="16"/>`+S.t(x,y+24,'M','s-nm s-mt','middle')+S.l(x,y+36,x,y+40,c);break;
+  }
+  return s+tn+nm;}
+function R(x,y0,y1,items,labels=[],c=''){const k=items.length,g=(y1-y0-40*k)/(k+1);let y=y0,s='';
+  for(let i=0;i<=k;i++){s+=S.l(x,y,x,y+g,c);if(labels[i])s+=S.n(x-6,y+g/2+4,labels[i]);y+=g;if(i<k){s+=E(items[i],x,y,c);y+=40;}}
+  return s+S.d(x,y0)+S.d(x,y1);}
+/* 병렬 묶음: list 항목을 x, x+dx, … 에 나란히 (높이 64) */
+function PAR(x,y,list,dx=70){const xe=x+dx*(list.length-1);let s=S.l(x,y,xe,y)+S.l(x,y+64,xe,y+64)+S.d(x,y)+S.d(x,y+64);
+  list.forEach((it,i)=>{const xi=x+dx*i;s+=S.l(xi,y,xi,y+12)+E(it,xi,y+12)+S.l(xi,y+52,xi,y+64);});return s;}
+/* 범용 가로줄(rung): 항목 또는 {par:[…]} 를 위→아래로 고르게 */
+function RG(x,y0,y1,parts,labels=[],dots=true){const h=p=>p.par?64:40;const tot=parts.reduce((a,p)=>a+h(p),0);const g=(y1-y0-tot)/(parts.length+1);
+  let y=y0,s=dots?S.d(x,y0)+S.d(x,y1):'';
+  parts.forEach((p,i)=>{s+=S.l(x,y,x,y+g);if(labels[i])s+=S.n(x-6,y+g/2+4,labels[i]);y+=g;s+=p.par?PAR(x,y,p.par,p.dx||70):E(p,x,y);y+=h(p);});
+  s+=S.l(x,y,x,y1);if(labels[parts.length])s+=S.n(x-6,(y+y1)/2+4,labels[parts.length]);return s;}
+function bus(x1,x2,y,label,arrow=true){return S.l(x1,y,x2,y)+(arrow?S.p(`M${x2-7} ${y-4} L${x2} ${y} L${x2-7} ${y+4}`):'')+S.n(x1,y-5,label,'start');}
+function frame(W,H,lvNo,body){const h=H+46;
+  return `<svg viewBox="0 0 ${W} ${h}" role="img" aria-label="연습 ${lvNo}단계 시퀀스 도면">
+  <rect x="6" y="6" width="${W-12}" height="${h-12}" class="s-ln s-frame"/>
+  ${body}
+  <g transform="translate(${W-266},${h-44})"><rect width="256" height="34" class="s-ln s-frame"/>
+  <line x1="150" y1="0" x2="150" y2="34" class="s-ln s-frame"/><line x1="206" y1="0" x2="206" y2="34" class="s-ln s-frame"/>
+  ${S.t(10,21,'시퀀스 도면 · 연습','s-tb')}${S.t(178,21,'Lv.'+lvNo,'s-tb','middle')}${S.t(231,21,'1 : 1','s-tb','middle')}</g></svg>`;}
+function motorS(cx,cy,label){return `<circle class="s-ln s-fill s-mot" cx="${cx}" cy="${cy}" r="22"/>`+S.t(cx,cy+5,'M','s-nm s-mt','middle')+S.t(cx,cy-30,label,'s-nm','middle');}
+const lvNo=id=>LEVELS.findIndex(l=>l.id===id)+1;
+function sch1(){return frame(520,380,lvNo('l1'),
+  S.t(40,34,'AC220V','s-hd')+bus(60,470,60,'220L (ELB 2번)')+bus(60,470,350,'220N (ELB 4번)')+
+  R(260,60,350,[{k:'ss',n:'SS1',t:['13','14']},{k:'lamp',n:'RL',t:['X1','X2']}],['220L','','220N']));}
+function sch2(){return frame(660,410,lvNo('l2'),
+  S.t(40,30,'제어회로 · DC24V','s-hd')+S.t(360,30,'동력회로 · AC220V','s-hd')+
+  bus(60,300,64,'24VD+ (SMPS +V)')+bus(60,300,380,'24VD- (SMPS −V)')+
+  `<rect x="30" y="170" width="64" height="90" class="s-ln s-fill"/>`+S.t(62,212,'SMPS','s-nm','middle')+S.t(62,226,'L·N 입력','s-tn','middle')+
+  S.l(62,64,62,170)+S.l(62,260,62,380)+S.d(62,64)+S.d(62,380)+S.t(66,160,'+V','s-tn')+S.t(66,276,'−V','s-tn')+
+  S.t(30,290,'입력 ← 220L · 220N','s-tn')+
+  R(200,64,380,[{k:'ss',n:'SS1',t:['13','14']},{k:'coil',n:'RY1',t:['2','7']}],['24VD+','S1','24VD-'])+
+  bus(360,630,64,'220L')+bus(360,630,380,'220N')+
+  R(490,64,380,[{k:'no',n:'RY1',t:['1','3']},{k:'fan',n:'FAN',t:['U1','U2']}],['220L','FAN','220N']));}
+function sch3(){const x=150;return frame(700,420,lvNo('l3'),
+  S.t(40,30,'제어회로 · DC24V','s-hd')+S.t(380,30,'표시등 · AC220V','s-hd')+
+  bus(50,320,60,'24VD+')+bus(50,320,390,'24VD-')+
+  S.l(x,60,x,96)+S.n(x-6,82,'24VD+')+E({k:'pbnc',n:'PB1',t:['11','12']},x,96)+S.l(x,136,x,166)+S.d(x,166)+S.n(x-6,156,'S1')+
+  S.l(x,166,x,186)+E({k:'pbno',n:'PB2',t:['13','14']},x,186)+S.l(x,226,x,256)+
+  S.l(x,166,250,166)+S.l(250,166,250,186)+E({k:'no',n:'RY1',t:['1','3']},250,186)+S.l(250,226,250,256)+S.l(250,256,x,256)+S.d(x,256)+
+  S.l(x,256,x,290)+S.n(x-6,278,'S2')+E({k:'coil',n:'RY1',t:['2','7']},x,290)+S.l(x,330,x,390)+S.n(x-6,364,'24VD-')+S.d(x,60)+S.d(x,390)+
+  bus(380,670,60,'220L')+bus(380,670,390,'220N')+
+  R(450,60,390,[{k:'no',n:'RY1',t:['8','6']},{k:'lamp',n:'RL',t:['X1','X2']}],['220L','RL','220N'])+
+  R(580,60,390,[{k:'nc',n:'RY1',t:['8','5']},{k:'lamp',n:'GL',t:['X1','X2']}],['220L','GL','220N']));}
+function sch4(ls){const it1=[{k:'ss',n:'SF',t:['13','14']},{k:'nc',n:'RY2',t:['1','4']},{k:'coil',n:'RY1',t:['2','7']}],it2=[{k:'ss',n:'SR',t:['13','14']},{k:'nc',n:'RY1',t:['1','4']},{k:'coil',n:'RY2',t:['2','7']}];
+  if(ls){it1.push({k:'ls',n:'LS-OP',t:['COM','NC']});it2.push({k:'ls',n:'LS-CL',t:['COM','NC']});}
+  const lb1=['220L','C1-FW','',''],lb2=['220L','C1-RV','',''];if(ls){lb1.push('');lb2.push('');}lb1[lb1.length-1]='220N';lb2[lb2.length-1]='220N';
+  return frame(720,450,lvNo(ls?'l5':'l4'),
+  bus(40,690,50,'220L')+bus(40,690,430,'220N')+
+  R(110,50,430,it1,lb1)+R(270,50,430,it2,lb2)+
+  S.l(440,50,440,96)+S.d(440,50)+E({k:'no',n:'RY1',t:['8','6']},440,96)+S.l(440,136,440,330)+S.l(440,330,488,330)+S.n(434,240,'M-FW')+
+  S.l(600,50,600,96)+S.d(600,50)+E({k:'no',n:'RY2',t:['8','6']},600,96)+S.l(600,136,600,330)+S.l(600,330,532,330)+S.n(594,240,'M-RV')+
+  motorS(510,330,'M1 개폐기')+S.t(482,322,'FW','s-tn','end')+S.t(538,322,'RV','s-tn')+S.l(510,352,510,430)+S.t(516,372,'COM','s-tn')+S.n(504,410,'220N')+S.d(510,430));}
+function schT1(){return frame(720,440,lvNo('t1'),
+  bus(40,690,60,'220L')+bus(40,690,420,'220N')+
+  RG(120,60,420,[{k:'pbnc',n:'PB0',t:['11','12']},{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'RY1',t:['1','3']}],dx:80},{k:'coil',n:'RY1',t:['2','7']}])+
+  RG(340,60,420,[{k:'no',n:'RY1',t:['8','6']},{par:[{k:'coil',n:'T',t:['2','7']},{k:'lamp',n:'RL',t:['X1','X2']}],dx:80}])+
+  RG(560,60,420,[{k:'tno',n:'T 3초',t:['8','6']},{k:'lamp',n:'YL',t:['X1','X2']}]));}
+function schT2(){return frame(720,480,lvNo('t2'),
+  bus(40,690,60,'220L')+bus(40,690,460,'220N')+
+  RG(120,60,460,[{k:'pbnc',n:'PB0',t:['11','12']},{k:'tnc',n:'T 5초',t:['8','5']},{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'RY1',t:['1','3']}],dx:80},{par:[{k:'coil',n:'RY1',t:['2','7']},{k:'coil',n:'T',t:['2','7']}],dx:80}])+
+  RG(400,60,460,[{k:'no',n:'RY1',t:['8','6']},{k:'fan',n:'FAN',t:['U1','U2']}])+
+  RG(560,60,460,[{k:'nc',n:'RY1',t:['8','5']},{k:'lamp',n:'GL',t:['X1','X2']}]));}
+function schT3(){return frame(560,420,lvNo('t3'),
+  bus(40,530,60,'220L')+bus(40,530,400,'220N')+
+  S.d(130,60)+S.l(130,60,130,90)+E({k:'ss',n:'SS1',t:['13','14']},130,90)+S.l(130,130,130,170)+S.d(130,170)+S.l(130,170,420,170)+S.d(270,170)+S.d(420,170)+
+  RG(130,170,400,[{k:'coil',n:'FR',t:['2','7']}],[],false)+S.d(130,400)+
+  RG(270,170,400,[{k:'no',n:'FR',t:['8','6']},{k:'lamp',n:'YL',t:['X1','X2']}],[],false)+S.d(270,400)+
+  RG(420,170,400,[{k:'nc',n:'FR',t:['8','5']},{k:'bz',n:'BZ',t:['X1','X2']}],[],false)+S.d(420,400)+
+  S.t(300,150,'FR 8번 공통 ← SS1 뒤 전원','s-tn'));}
+/* 3상 주회로 */
+function gang(x0,y,kind,label){let s='';for(let i=0;i<3;i++)s+=E({k:kind},x0+i*30,y);return s+S.l(x0+6,y+19,x0+66,y+19,'s-dash')+S.t(x0-10,y+24,label,'s-nm','end');}
+function heaters(x0,y){let s='';for(let i=0;i<3;i++){const x=x0+i*30;s+=S.l(x,y,x,y+8)+`<rect x="${x-4}" y="${y+8}" width="8" height="24" class="s-ln s-fill"/>`+S.l(x,y+32,x,y+40);}return s+S.l(x0+4,y+20,x0+56,y+20,'s-dash')+S.t(x0-10,y+24,'THR','s-nm','end');}
+function vline(x0,y1,y2,labels){let s='';for(let i=0;i<3;i++){s+=S.l(x0+i*30,y1,x0+i*30,y2);if(labels&&labels[i])s+=S.n(x0+i*30+4,(y1+y2)/2+4,labels[i],'start');}return s;}
+function motor3(x0,y){return vline(x0,y-60,y-30)+S.l(x0,y-30,x0+14,y-14)+S.l(x0+60,y-30,x0+46,y-14)+S.l(x0+30,y-30,x0+30,y-24)+
+  `<circle class="s-ln s-fill s-mot" cx="${x0+30}" cy="${y}" r="24"/>`+S.t(x0+30,y-2,'M','s-nm s-mt','middle')+S.t(x0+30,y+11,'3φ','s-tn','middle');}
+function mainTop(x0){return S.t(x0,40,'R','s-nm','middle')+S.t(x0+30,40,'S','s-nm','middle')+S.t(x0+60,40,'T','s-nm','middle')+S.t(x0-40,24,'3φ 220V','s-hd')+
+  vline(x0,46,70)+gang(x0,70,'no','MCCB')+vline(x0,110,150,['R','S','T'])+S.d(x0,128)+S.d(x0+60,136)+S.t(x0-8,126,'→F1','s-tn','end')+S.l(x0+60,136,x0+76,136)+S.t(x0+78,139,'→F2','s-tn');}
+function ctrlBus(x1,x2,yT,yB){return bus(x1,x2,yT,'R (F1 → 퓨즈 2번)')+bus(x1,x2,yB,'T (F2 → 퓨즈 4번)')+S.t(x1,yT-18,'제어회로 · AC220V','s-hd');}
+const THRB={k:'nc',n:'THR',t:['95','96']},PB0S={k:'pbnc',n:'PB0',t:['11','12']};
+function schE1(){const x0=70;return frame(780,500,lvNo('e1'),
+  mainTop(x0)+gang(x0,150,'no','MC')+vline(x0,190,230,['U','V','W'])+heaters(x0,230)+vline(x0,270,330)+motor3(x0,390)+
+  ctrlBus(220,750,70,480)+
+  RG(300,70,480,[THRB,PB0S,{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'MC',t:['13','14']}],dx:80},{k:'coil',n:'MC',t:['A1','A2']}])+
+  RG(470,70,480,[{k:'no',n:'MC',t:['43','44']},{k:'lamp',n:'RL',t:['X1','X2']}])+
+  RG(570,70,480,[{k:'nc',n:'MC',t:['21','22']},{k:'lamp',n:'GL',t:['X1','X2']}])+
+  RG(670,70,480,[{k:'no',n:'THR',t:['97','98']},{k:'lamp',n:'YL',t:['X1','X2']}]));}
+function schE2(){const x0=60;const xr=x0+110;let m=mainTop(x0)+S.d(x0,128)+S.l(x0,128,xr,128)+S.d(x0+30,140)+S.l(x0+30,140,xr+30,140)+S.d(x0+60,152)+S.l(x0+60,152,xr+60,152)+
+  S.l(xr,128,xr,170)+S.l(xr+30,140,xr+30,170)+S.l(xr+60,152,xr+60,170)+vline(x0,150,170)+gang(x0,170,'no','MC1')+gang(xr,170,'no','')+S.t(xr+80,194,'MC2','s-nm')+
+  S.l(xr,210,xr,250)+S.l(xr,250,x0+60,250)+S.l(xr+30,210,xr+30,240)+S.l(xr+30,240,x0+30,240)+S.l(xr+60,210,xr+60,230)+S.l(xr+60,230,x0,230)+
+  S.d(x0,230)+S.d(x0+30,240)+S.d(x0+60,250)+S.t(xr+70,246,'R↔T 교차','s-tn')+vline(x0,210,270,['U','V','W'])+heaters(x0,270)+vline(x0,310,370)+motor3(x0,430);
+  const y1=110,y2=520,xa=380,xb=480,yn=230;
+  return frame(900,540,lvNo('e2'),m+bus(330,880,y1,'R (F1)')+bus(330,880,y2,'T (F2)')+
+  RG(xa,y1,yn,[THRB,PB0S])+S.l(xa,yn,xb+60,yn)+S.d(xb+60,yn)+
+  RG(xa,yn,y2,[{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'MC1',t:['13','14']}],dx:60},{k:'nc',n:'MC2',t:['21','22']},{k:'coil',n:'MC1',t:['A1','A2']}],[],false)+S.d(xa,y2)+
+  RG(xb+60,yn,y2,[{par:[{k:'pbno',n:'PB2',t:['13','14']},{k:'no',n:'MC2',t:['13','14']}],dx:60},{k:'nc',n:'MC1',t:['21','22']},{k:'coil',n:'MC2',t:['A1','A2']}],[],false)+S.d(xb+60,y2)+
+  RG(700,y1,y2,[{k:'no',n:'MC1',t:['43','44']},{k:'lamp',n:'RL1',t:['X1','X2']}])+
+  RG(770,y1,y2,[{k:'no',n:'MC2',t:['43','44']},{k:'lamp',n:'RL2',t:['X1','X2']}])+
+  RG(840,y1,y2,[{k:'nc',n:'',t:['31','32']},{k:'nc',n:'',t:['31','32']},{k:'lamp',n:'',t:['X1','X2']}])+S.t(856,y1+90,'MC1','s-tn')+S.t(856,y1+190,'MC2','s-tn')+S.t(856,y1+290,'GL','s-tn'));}
+function schE3(){const x0=70,y1=70,y2=520,yn=170;return frame(960,540,lvNo('e3'),
+  mainTop(x0)+gang(x0,150,'no','MC')+vline(x0,190,230,['U','V','W'])+heaters(x0,230)+vline(x0,270,330)+motor3(x0,390)+
+  ctrlBus(220,930,y1,y2)+
+  RG(300,y1,y2,[THRB,PB0S,{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'MC',t:['13','14']}],dx:70},{k:'tnc',n:'TM 5초',t:['8','5']},{par:[{k:'coil',n:'MC',t:['A1','A2']},{k:'coil',n:'TM',t:['2','7']}],dx:70}])+
+  RG(480,y1,y2,[{k:'no',n:'MC',t:['43','44']},{k:'lamp',n:'RL',t:['X1','X2']}])+
+  RG(570,y1,y2,[{k:'nc',n:'MC',t:['21','22']},{k:'lamp',n:'GL',t:['X1','X2']}])+
+  RG(680,y1,yn,[{k:'no',n:'THR',t:['97','98']}])+S.l(680,yn,890,yn)+S.d(780,yn)+S.d(890,yn)+
+  RG(680,yn,y2,[{k:'coil',n:'FR',t:['2','7']}],[],false)+S.d(680,y2)+
+  RG(780,yn,y2,[{k:'no',n:'FR',t:['8','6']},{k:'lamp',n:'YL',t:['X1','X2']}],[],false)+S.d(780,y2)+
+  RG(890,yn,y2,[{k:'nc',n:'FR',t:['8','5']},{k:'bz',n:'BZ',t:['X1','X2']}],[],false)+S.d(890,y2));}
+function schE4(){const x0=90,y1=70,y2=560,yn=330;
+  const main=mainTop(x0)+gang(x0,150,'no','MCM')+vline(x0,190,230)+heaters(x0,230)+vline(x0,270,320,['U1','V1','W1'])+
+    S.l(x0,320,x0+18,334)+S.l(x0+60,320,x0+42,334)+S.l(x0+30,320,x0+30,330)+`<circle class="s-ln s-fill s-mot" cx="${x0+30}" cy="354" r="24"/>`+S.t(x0+30,352,'M','s-nm s-mt','middle')+S.t(x0+30,365,'3φ','s-tn','middle')+
+    S.l(x0+18,374,x0,388)+S.l(x0+42,374,x0+60,388)+S.l(x0+30,378,x0+30,388)+vline(x0,388,410,['U2','V2','W2'])+
+    gang(x0,410,'no','MCS')+vline(x0,450,462)+S.l(x0,462,x0+60,462)+S.d(x0+30,462)+S.t(x0+30,478,'Y 결선점','s-tn','middle')+
+    S.d(x0,398)+S.d(x0+30,398)+S.d(x0+60,398)+S.l(x0,398,x0+100,398)+S.l(x0+30,398,x0+30,398)+S.t(x0+104,402,'→ MCD','s-tn')+
+    S.t(x0-60,520,'MCD(Δ): U2–V1 · V2–W1 · W2–U1','s-tn');
+  return frame(940,580,lvNo('e4'),main+ctrlBus(250,910,y1,y2)+
+  RG(320,y1,yn,[THRB,PB0S,{par:[{k:'pbno',n:'PB1',t:['13','14']},{k:'no',n:'MCM',t:['13','14']}],dx:70}])+S.l(320,yn,680,yn)+[420,540,680].map(x=>S.d(x,yn)).join('')+
+  RG(320,yn,y2,[{k:'coil',n:'MCM',t:['A1','A2']}],[],false)+S.d(320,y2)+
+  RG(420,yn,y2,[{k:'coil',n:'TM',t:['2','7']}],[],false)+S.d(420,y2)+
+  RG(540,yn,y2,[{k:'tnc',n:'TM',t:['8','5']},{k:'nc',n:'MCD',t:['21','22']},{k:'coil',n:'MCS',t:['A1','A2']}],[],false)+S.d(540,y2)+
+  RG(680,yn,y2,[{k:'tno',n:'TM',t:['8','6']},{k:'nc',n:'MCS',t:['21','22']},{k:'coil',n:'MCD',t:['A1','A2']}],[],false)+S.d(680,y2)+
+  RG(790,y1,y2,[{k:'no',n:'MCD',t:['43','44']},{k:'lamp',n:'RL',t:['X1','X2']}])+
+  RG(870,y1,y2,[{k:'nc',n:'MCM',t:['31','32']},{k:'lamp',n:'GL',t:['X1','X2']}]));}
+
+/* ---------- 상태 ---------- */
+const COLORS=[['L','갈색 · L, R상','#8b5a2b'],['N','청색 · N','#2f6fd0'],['P','적색 · DC+','#d33a2c'],['M','흑색 · S상, DC−','#25292c'],['S','황색 · 제어선','#e0b100'],['G','회색 · T상','#9aa2a6']];
+const colorHex=id=>(COLORS.find(c=>c[0]===id)||COLORS[4])[2];
+const store={get(){try{return JSON.parse(localStorage.getItem('cbx-trainer-v1'))||{}}catch(e){return {}}},set(v){try{localStorage.setItem('cbx-trainer-v1',JSON.stringify(v))}catch(e){}}};
+const prog=Object.assign({stars:{},wires:{}},store.get());
+const ZOOMS=[700,820,980,1200,1450];
+const app={zoom:(typeof innerWidth!=='undefined'&&innerWidth<860)?2:0,li:0,mode:'wire',wires:[],sel:null,hist:[],hints:0,faults:0,color:'S',st:null,r:null,banner:null,report:null,hl:[],pop:null,sig:''};
+const lv=()=>LEVELS[app.li];
+const $=id=>document.getElementById(id);
+function save(){prog.wires[lv().id]=app.wires;store.set(prog);}
+function validWires(l,ws){const ks=new Set(allKeys(l));return (ws||[]).filter(w=>ks.has(w.a)&&ks.has(w.b));}
+function loadLevel(i){stopSim();app.li=i;app.wires=validWires(LEVELS[i],prog.wires[LEVELS[i].id]).map(w=>({...w}));app.sel=null;app.hist=[];app.hints=0;app.faults=0;app.report=null;app.hl=[];app.banner=null;app.pop=null;app.mode='wire';
+  try{localStorage.setItem('cbx-trainer-lvid',LEVELS[i].id)}catch(e){}
+  renderAll();}
+function compAt(key){const [cid,tid]=key.split('.');const c=lv().comps.find(x=>x.id===cid);const t=D(c).terms.find(x=>x.id===tid);return {c,t,x:c.x+t.x,y:c.y+t.y,dir:t.dir};}
+function wireCount(key){return app.wires.filter(w=>w.a===key||w.b===key).length;}
+
+/* ---------- 렌더 ---------- */
+function renderLevels(){let g='',h='';LEVELS.forEach((l,i)=>{if(l.grp!==g){g=l.grp;h+=`<h2>${g}</h2>`;}const s=prog.stars[l.id]||0;
+  h+=`<button class="lv ${i===app.li?'cur':''}" data-li="${i}" aria-current="${i===app.li}"><span class="no">${String(i+1).padStart(2,'0')}</span><span class="nm">${l.title}<small>${l.sub}</small></span><span class="stars" aria-label="별 ${s}개">${[0,1,2].map(k=>k<s?'<b>★</b>':'★').join('')}</span></button>`;});
+  $('levels').innerHTML=h;}
+function renderMission(){const l=lv();$('mission').innerHTML=`<div><div class="eyebrow">${l.grp} · LEVEL ${app.li+1} / ${LEVELS.length}</div><h3>${l.title}</h3><p>${l.text}</p></div><ul>${l.points.map(p=>`<li>${p}</li>`).join('')}</ul>`;}
+function renderSheet(){$('sheet').innerHTML=lv().sch();}
+function renderTools(){const t=$('tools');const B=brkName(lv());
+  if(app.mode==='wire'){t.innerHTML=`<span class="lbl">전선 색</span>${COLORS.map(c=>`<button class="sw" data-color="${c[0]}" aria-pressed="${app.color===c[0]}" title="${c[1]}" aria-label="${c[1]}" style="background:${c[2]}"></button>`).join('')}
+    <span class="spacer"></span><button class="btn" id="bUndo" ${app.hist.length?'':'disabled'}>되돌리기</button><button class="btn" id="bClear" ${app.wires.length?'':'disabled'}>전체 철거</button><button class="btn" id="bHint">힌트</button><button class="btn primary" id="bTest">동작 테스트 ▶</button>`;}
+  else t.innerHTML=`<span class="lbl">${B}를 눌러 투입하고 스위치·버튼을 눌러 보세요. 버튼은 누르고 있는 동안만 눌려요.${lv().comps.some(c=>c.type==='THR')?' THR을 누르면 과부하 트립/복귀.':''}</span><span class="spacer"></span><button class="btn primary" id="bTest">동작 테스트 ▶</button>`;
+  $('mWire').setAttribute('aria-pressed',app.mode==='wire');$('mSim').setAttribute('aria-pressed',app.mode==='sim');}
+function renderBanner(){const b=app.banner;$('banner').innerHTML=b?`<div class="banner ${b.kind}" role="status">${b.text}</div>`:'';}
+function renderLegend(){const three=lv().comps.some(c=>c.type==='MCCB');
+  $('legend').innerHTML=app.mode==='sim'?(three?`<span><i style="background:var(--v-l)"></i>R상</span><span><i style="background:var(--v-s)"></i>S상</span><span><i style="background:var(--v-t)"></i>T상</span>`:`<span><i style="background:var(--v-l)"></i>220L</span><span><i style="background:var(--v-n)"></i>220N</span><span><i style="background:var(--v-p)"></i>+24V</span><span><i style="background:var(--v-m)"></i>−24V</span>`)+`<span>단자 테두리 색 = 지금 걸린 전압</span>`
+  :`<span>단자를 눌러 선택 → 다른 단자를 누르면 배선. 선을 누르면 넘버링 · 색 변경 · 삭제. 단자 하나에 최대 2가닥.</span>`;}
+function curveK(p,q){const dx=Math.abs(p.x-q.x),dy=Math.abs(p.y-q.y);return Math.max(40,Math.min(170,34+.32*dy+.14*dx));}
+function wirePath(a,b){const p=compAt(a),q=compAt(b),k=curveK(p,q);return `M${p.x} ${p.y} C${p.x} ${p.y+p.dir*k} ${q.x} ${q.y+q.dir*k} ${q.x} ${q.y}`;}
+function bez(a,b,t){const p=compAt(a),q=compAt(b),k=curveK(p,q);const P=[[p.x,p.y],[p.x,p.y+p.dir*k],[q.x,q.y+q.dir*k],[q.x,q.y]];const u=1-t;
+  return [0,1].map(i=>u*u*u*P[0][i]+3*u*u*t*P[1][i]+3*u*t*t*P[2][i]+t*t*t*P[3][i]);}
+function potOf(key){if(!app.r)return null;const s=app.r.tags.get(app.r.uf.find(key));if(!s||!s.size)return null;if(s.size>1)return 'X';return [...s][0];}
+function relayFace(c,w,h,on,lines){return `<rect class="dev2" width="${w}" height="${h}" rx="5"/><rect class="dev" x="16" y="38" width="${w-32}" height="${h-76}" rx="6"/>
+  <text class="dt" x="${w/2-8}" y="58" text-anchor="middle">${c.id}</text><circle class="led ${on?'r':''}" cx="${w-34}" cy="53" r="5"/>`+lines.map((t,i)=>`<text class="dm" x="${w/2}" y="${74+i*14}" text-anchor="middle">${t}</text>`).join('');}
+function renderComp(c,sim){const d=D(c),st=app.st,r=app.r,L=r&&r.loads;let s='';const w=d.w,h=d.h;
+  const name=(y)=>c.label?`<text class="nm" x="${w/2}" y="${y}" text-anchor="middle">${c.label}</text>`:'';
+  const coilOn=sim&&r&&r.coil[c.id];
+  switch(c.type){
+    case 'ELB':case 'MCCB':{const on=sim&&st.brk;const three=c.type==='MCCB';
+      const stubs=three?[['#8b5a2b'],['#25292c'],['#9aa2a6']]:[['#8b5a2b'],['#2f6fd0']];
+      s=d.terms.filter(t=>t.fixed).map((t,i)=>`<line x1="${t.x}" y1="-24" x2="${t.x}" y2="18" stroke="${stubs[i][0]}" stroke-width="4"/>`).join('')+
+      `<text class="ds" x="${w/2}" y="-28" text-anchor="middle" style="fill:var(--muted)">${three?'3φ 220V 입력':'AC220V 입력'}</text>
+      <g class="${sim?'act':''}" data-act="brk"><rect class="dev" width="${w}" height="${h}" rx="6"/><text class="dt" x="${w/2}" y="52" text-anchor="middle">${c.type}</text>
+      <rect x="${w/2-16}" y="60" width="32" height="40" rx="4" fill="#3a4246"/><rect x="${w/2-12}" y="${on?63:83}" width="24" height="14" rx="3" fill="${on?'#2fbf62':'#d8dcdc'}"/>
+      <text class="dm" x="${w/2}" y="112" text-anchor="middle">${sim?(on?'ON':'OFF · 눌러서 투입'):(three?'3P 배선용 차단기':'2P 누전차단기')}</text></g>`;break;}
+    case 'FUSE':s=`<rect class="dev" width="${w}" height="${h}" rx="5"/>${d.terms.slice(0,2).map(t=>`<rect x="${t.x-9}" y="34" width="18" height="52" rx="4" fill="#e9eef0" stroke="#59646a"/><line x1="${t.x}" y1="38" x2="${t.x}" y2="82" stroke="#b07a2a" stroke-width="2"/>`).join('')}<text class="dm" x="${w/2}" y="${h/2+4}" text-anchor="middle" style="opacity:0">F</text>`;break;
+    case 'TB':{const n=c.n;s=`<rect class="dev2" width="${w}" height="${h}" rx="4"/>`;
+      for(let i=0;i<n;i++){const x=d.terms[i].x;s+=`<rect x="${x-15}" y="4" width="30" height="${h-8}" rx="3" class="dev"/>`;}
+      s+=`<line class="jumper" x1="${d.terms[0].x}" y1="40" x2="${d.terms[n-1].x}" y2="40"/><line class="jumper" x1="${d.terms[0].x}" y1="80" x2="${d.terms[n-1].x}" y2="80"/>
+      <text class="dm" x="${w/2}" y="64" text-anchor="middle">${c.id} · L / N 공통</text>`;break;}
+    case 'SMPS':{const on=sim&&r&&r.smps[c.id];s=`<rect class="dev" width="${w}" height="${h}" rx="5"/><text class="dt" x="${w/2}" y="58" text-anchor="middle">SMPS</text><text class="ds" x="${w/2}" y="76" text-anchor="middle">DC 24V</text><circle class="led ${on?'g':''}" cx="${w-22}" cy="48" r="5"/>`;break;}
+    case 'RELAY':s=relayFace(c,w,h,coilOn,[st&&st.burnt[c.id]?'코일 소손':'코일 '+(c.coil==='DC24'?'DC24V':'AC220V')+' · 2–7','a 1–3 · 8–6','b 1–4 · 8–5']);break;
+    case 'TIMER':{const e=st?(st.tm[c.id]||0):0;const pct=Math.min(1,e/c.t);
+      s=relayFace(c,w,h,coilOn,[`코일 2–7 · 설정 ${c.t}초`,'한시 a 8–6 · b 8–5','순시 a 1–3 · b 1–4'])+(sim?`<rect x="28" y="${h-30}" width="${w-56}" height="6" rx="3" fill="#3a4246"/><rect x="28" y="${h-30}" width="${(w-56)*pct}" height="6" rx="3" fill="${pct>=1?'#34d058':'#ffc400'}"/>`:'');break;}
+    case 'FLICK':{const ph=coilOn&&Math.floor((st.fk[c.id]||0)/0.5+1e-9)%2===0;s=relayFace(c,w,h,false,['플리커 · 코일 2–7','8–6 ↔ 8–5 교대','0.5초 간격'])+`<circle class="led ${coilOn?(ph?'y':''):''}" cx="${w-34}" cy="53" r="5"/>`;break;}
+    case 'MC':s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><text class="dt" x="18" y="58">${c.id}</text><text class="ds" x="${18+c.id.length*10+8}" y="58">전자접촉기</text><circle class="led ${coilOn?'r':''}" cx="${w-24}" cy="53" r="5"/>
+      <text class="dm" x="18" y="78">코일 A1–A2 · AC220V</text><text class="dm" x="18" y="93">주접점 L1·L2·L3 → T1·T2·T3</text><text class="dm" x="18" y="108">a 13–14 · 43–44 / b 21–22 · 31–32</text>`;break;
+    case 'THR':{const tr=st&&st.trip[c.id];s=`<g class="${sim?'act':''}" data-act="trip:${c.id}"><rect class="dev" width="${w}" height="${h}" rx="6"/><text class="dt" x="16" y="58">THR</text><text class="ds" x="60" y="58">과부하 계전기</text>
+      <text class="dm" x="16" y="78">b 95–96 · a 97–98</text><rect x="${w-58}" y="66" width="44" height="22" rx="4" fill="${tr?'#d8322a':'#3a4246'}"/><text x="${w-36}" y="81" text-anchor="middle" fill="#fff" style="font:600 10.5px var(--font)">${tr?'트립':sim?'시험':'정상'}</text></g>`;break;}
+    case 'SS':{const on=st&&st.sw[c.id]==='ON';const a=sim?(on?40:-40):-40;
+      s=`<g class="${sim?'act':''}" data-act="sw:${c.id}"><rect class="dev" width="${w}" height="${h}" rx="6"/>
+      <text class="dm" x="12" y="74">OFF</text><text class="dm" x="${w-12}" y="74" text-anchor="end">ON</text>
+      <g transform="translate(${w/2},68) rotate(${a})"><circle class="knob" r="15"/><line class="knob-p" x1="0" y1="2" x2="0" y2="-12"/></g></g>${name(h+16)}`;break;}
+    case 'PB':{const p=sim&&st.pb[c.id];s=`<g class="${sim?'act':''}" data-pb="${c.id}"><rect class="dev" width="${w}" height="${h}" rx="6"/><circle cx="${w/2}" cy="68" r="21" fill="#3a4246"/><circle cx="${w/2}" cy="68" r="${p?14:17}" fill="${c.color}" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+      <text class="dm" x="${w/2}" y="${h-6}" text-anchor="middle">${c.nc?'b접점 NC':'a접점 NO'}</text></g>${name(h+16)}`;break;}
+    case 'LAMP':{const on=sim&&L&&L.lamp[c.id];s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><circle cx="${w/2}" cy="72" r="22" fill="#3a4246"/>
+      <circle class="lens" cx="${w/2}" cy="72" r="17" fill="${on?c.color:'color-mix(in srgb,'+c.color+' 30%,#555)'}" style="${on?`filter:drop-shadow(0 0 10px ${c.color})`:''}"/>${name(h+16)}`;break;}
+    case 'BZ':{const on=sim&&L&&L.lamp[c.id];s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><circle cx="${w/2-8}" cy="72" r="18" fill="#3a4246"/><circle cx="${w/2-8}" cy="72" r="6" fill="#888"/>
+      ${on?`<g class="wave" stroke="var(--accent)" stroke-width="2.5" fill="none"><path d="M${w/2+16} 62 q8 10 0 20"/><path d="M${w/2+23} 56 q12 16 0 32"/></g>`:''}${name(h+16)}`;break;}
+    case 'FAN':{const on=sim&&L&&L.fan[c.id];s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><circle cx="${w/2}" cy="74" r="30" fill="#3a4246"/>
+      <g class="${on?'spin':''}">${[0,120,240].map(a=>`<ellipse class="blade" cx="${w/2}" cy="58" rx="7" ry="15" transform="rotate(${a} ${w/2} 74)"/>`).join('')}<circle cx="${w/2}" cy="74" r="5" fill="#ccc"/></g>${name(h+16)}`;break;}
+    case 'MOTOR':case 'MOTOR3':case 'MOTOR6':{const m=sim&&L?L.motor[c.id]:'STOP';const pos=st?Math.round(st.pos[c.id]??50):50;const run=['FW','RV','Y','D'].includes(m);
+      s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><circle cx="48" cy="80" r="27" fill="#3a4246"/><text x="48" y="86" text-anchor="middle" fill="#fff" style="font:700 17px var(--font)">M</text>
+      ${run?`<g class="spin ${m==='RV'?'rev':''}"><path d="M48 50 A30 30 0 0 1 78 80" fill="none" stroke="var(--accent)" stroke-width="3"/><path d="M78 80 l-5 -8 l9 1 z" fill="var(--accent)"/></g>`:''}`+
+      (c.type==='MOTOR'?`<text class="dm" x="96" y="56">개폐 위치 ${pos}%</text><rect x="96" y="62" width="90" height="12" rx="3" fill="#3a4246"/><rect x="97" y="63" width="${88*pos/100}" height="10" rx="2" fill="#7cc4ff"/>`
+        :`<text class="dm" x="96" y="60">${c.type==='MOTOR6'?'Y-Δ 6단자':'3상 유도전동기'}</text>`)+
+      `<text class="dt" x="96" y="96" style="font-size:13px;${m==='PHASE'||m==='BOTH'?'fill:#c42b2b':''}">${sim?MOT[m]:'정지'}</text>`+name(h+16);break;}
+    case 'LS':{const act=st&&lsActuated(c,st);s=`<rect class="dev" width="${w}" height="${h}" rx="6"/><rect x="${w/2-16}" y="52" width="32" height="30" rx="3" fill="#3a4246"/>
+      <line x1="${w/2}" y1="52" x2="${w/2+(act?2:18)}" y2="${act?38:40}" stroke="#3a4246" stroke-width="4" stroke-linecap="round"/><circle cx="${w/2+(act?2:18)}" cy="${act?36:38}" r="5" fill="#9aa2a6"/>
+      <text class="dm" x="${w/2}" y="${h-6}" text-anchor="middle">${sim?(act?'동작 · NC 끊김':'평상 · NC 붙음'):'COM · NC · NO'}</text>`+name(h+16);break;}
+  }
+  if(c.type==='FUSE')s+=`<text class="dt" x="${w/2}" y="${h/2+5}" text-anchor="middle" style="font-size:12px">F</text>`;
+  return `<g transform="translate(${c.x},${c.y})">${s}</g>`;}
+function renderTerms(c,sim){const d=D(c);let s='';
+  for(const t of d.terms){if(t.fixed){s+=`<g transform="translate(${c.x+t.x},${c.y+t.y})"><circle r="8" style="fill:#cfd6d9;stroke:#59646a;stroke-width:1.5"/></g>`;continue;}
+    const key=c.id+'.'+t.id;const cnt=wireCount(key);const pot=sim?potOf(key):null;const ly=t.dir<0?24:-14;
+    s+=`<g class="term ${app.sel===key?'sel':''} ${cnt>=2?'full':''} ${app.hl.includes(key)?'hl':''}" data-t="${key}" transform="translate(${c.x+t.x},${c.y+t.y})">
+    <title>${termName(lv(),key)}${t.desc?' — '+t.desc:''}</title>
+    <circle class="hit" r="17"/>${pot?`<circle class="pot ${pot}" r="12"/>`:''}<circle class="ring" r="14" fill="none"/><circle class="screw" r="8"/><path class="x" d="M-4 0 H4 M0 -4 V4"/>
+    <text y="${t.dir<0?ly+4:ly}" text-anchor="middle">${t.lb}</text></g>`;}
+  return s;}
+function renderPanel(){const l=lv(),sim=app.mode==='sim';const W=1000,H=730;
+  let bg=`<rect class="plate" x="0" y="0" width="${W}" height="410" rx="4"/>`;
+  for(const y of [110,315])bg+=`<rect class="rail" x="14" y="${y-14}" width="${W-28}" height="28" rx="2"/>${range(24).map(i=>`<rect class="hole" x="${30+i*40}" y="${y-4}" width="18" height="8" rx="4"/>`).join('')}`;
+  bg+=`<text class="zone-t" x="${W-14}" y="400" text-anchor="end">판넬 내부</text>
+  <rect class="zone" x="0" y="420" width="${W}" height="148" rx="4"/><text class="zone-t" x="${W-14}" y="558" text-anchor="end">도어 전면 · 스위치 / 표시등</text>
+  <rect class="zone" x="0" y="576" width="${W}" height="${H-578}" rx="4"/><text class="zone-t" x="${W-14}" y="${H-12}" text-anchor="end">현장 기기</text>`;
+  const comps=l.comps.map(c=>renderComp(c,sim)).join('');
+  const wires=app.wires.map((w,i)=>{const d=wirePath(w.a,w.b);let flow='';
+    if(sim&&app.r){const p=potOf(w.a);if(p&&p!=='N'&&p!=='M'&&p!=='X')flow=`<path class="flow" d="${d}"/>`;}
+    let tag='';if(w.tag){const [x,y]=bez(w.a,w.b,.5);const tw=w.tag.length*6.6+10;tag=`<g class="tag" transform="translate(${x-tw/2},${y-9})"><rect width="${tw}" height="18" rx="3"/><text x="${tw/2}" y="13" text-anchor="middle">${w.tag}</text></g>`;}
+    return `<g class="wire ${app.pop&&app.pop.i===i?'hl':''}" data-w="${i}"><path class="ol" d="${d}"/><path class="core" d="${d}" stroke="${colorHex(w.color)}"/>${flow}<path class="hit" d="${d}"/>${tag}</g>`;}).join('');
+  const terms=l.comps.map(c=>renderTerms(c,sim)).join('');
+  $('panelbox').innerHTML=`<svg id="panel" class="${sim?'sim':''}" style="min-width:${ZOOMS[app.zoom]}px" viewBox="-6 -40 ${W+12} ${H+48}" role="application" aria-label="판넬 배선 작업대">${bg}${comps}${wires}${terms}<path id="preview" class="preview" d=""/></svg>${app.pop?popHTML():''}`;
+}
+function popHTML(){const w=app.wires[app.pop.i];if(!w)return '';const labels=[...new Set(lv().ref.map(r=>r[2]).filter(Boolean))];
+  return `<div class="pop" style="left:${app.pop.x}px;top:${app.pop.y}px" role="dialog" aria-label="전선 편집">
+  <div class="ends">${termName(lv(),w.a)} ↔ ${termName(lv(),w.b)}</div>
+  <label class="row">넘버링 <select id="popTag"><option value="">(없음)</option>${labels.map(t=>`<option ${w.tag===t?'selected':''}>${t}</option>`).join('')}</select></label>
+  <div class="row">${COLORS.map(c=>`<button class="sw" data-wcolor="${c[0]}" aria-pressed="${w.color===c[0]}" title="${c[1]}" aria-label="${c[1]}" style="background:${c[2]}"></button>`).join('')}</div>
+  <div class="row"><button class="btn" id="popDel" style="color:var(--bad)">선 삭제</button><button class="btn" id="popClose">닫기</button></div></div>`;}
+function renderReport(){const r=app.report,el=$('report');
+  if(!r){el.innerHTML=`<p class="empty">배선을 마치면 <b>동작 테스트 ▶</b>를 눌러 보세요. 시나리오대로 스위치를 조작해서 램프 · 릴레이 · 전동기가 맞게 움직이는지 자동으로 확인해요. 이 단계 정답 배선은 ${lv().ref.length}가닥이에요.</p>`;return;}
+  if(r.hint){el.innerHTML=r.hint;return;}
+  const n=r.num;const s1=r.pass,s2=r.pass&&n.need>0&&n.ok===n.need,s3=r.pass&&app.hints===0&&app.faults===0;
+  el.innerHTML=`<ol>${r.steps.map(s=>`<li class="${s.status}"><span class="ic">${s.status==='pass'?'✓':s.status==='fail'?'✗':'·'}</span><span>${s.say}</span>${s.why?s.why.map(w=>`<span class="why">${w}</span>`).join(''):''}</li>`).join('')}</ol>
+  <div class="score"><span class="${s1?'on':'off'}">★ 동작 테스트 통과</span><span class="${s2?'on':'off'}">★ 넘버링 ${n.ok}/${n.need}</span><span class="${s3?'on':'off'}">★ 힌트 · 사고 없이 (힌트 ${app.hints}, 사고 ${app.faults})</span>
+  ${r.pass&&app.li<LEVELS.length-1?'<button class="btn primary" id="bNext">다음 단계 →</button>':''}</div>
+  ${r.pass&&!s2&&n.need?`<p class="empty">넘버링이 ${n.need-n.ok}개 빠졌거나 틀렸어요. 선을 눌러 도면의 분홍 넘버링을 달아 보세요.${n.bad[0]?` 예: ${termName(lv(),n.bad[0].w.a)} ↔ ${termName(lv(),n.bad[0].w.b)} 선은 <b>${n.bad[0].l}</b>`:''}</p>`:''}
+  ${!r.pass?'<p class="empty">막히면 <b>힌트</b>를 눌러 보세요. 도면과 다른 선을 하나씩 짚어 줘요.</p>':''}`;}
+function renderAll(){renderLevels();renderMission();renderSheet();renderTools();renderBanner();renderPanel();renderLegend();renderReport();}
+
+/* ---------- 동작 ---------- */
+function pushHist(){app.hist.push(JSON.stringify(app.wires));if(app.hist.length>80)app.hist.shift();}
+function toast(text,kind='info'){app.banner={text,kind};renderBanner();}
+function onTerm(key){if(app.mode!=='wire')return;app.hl=[];app.pop=null;
+  if(!app.sel){if(wireCount(key)>=2){toast('이 단자엔 이미 2가닥이 물려 있어요. 단자 하나에 전선은 2가닥까지만 물리세요.','bad');renderPanel();return;}
+    app.sel=key;toast(`<b>${termName(lv(),key)}</b> 선택됨 → 이어 줄 단자를 누르세요. (같은 단자를 다시 누르면 취소)`,'info');renderPanel();return;}
+  if(app.sel===key){app.sel=null;app.banner=null;renderBanner();renderPanel();return;}
+  const a=app.sel,b=key;
+  if(wireCount(b)>=2){toast('이 단자엔 이미 2가닥이 물려 있어요. 다른 단자에서 건너 배선해 보세요.','bad');return;}
+  if(app.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a))){toast('이미 연결된 선이에요.','info');app.sel=null;renderPanel();return;}
+  pushHist();app.wires.push({a,b,color:app.color,tag:''});app.sel=null;app.report=null;save();
+  if(app.banner&&/선택됨/.test(app.banner.text)){app.banner=null;renderBanner();}
+  if(a.split('.')[0]===b.split('.')[0]&&lv().comps.find(c=>c.id===a.split('.')[0]).type==='TB')toast('같은 단자대 L칸끼리(또는 N칸끼리)는 이미 점퍼로 묶여 있어서 이 선은 없어도 돼요.','info');
+  renderTools();renderPanel();renderReport();}
+function svgPt(e){const svg=$('panel');const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+document.addEventListener('click',e=>{
+  const lvb=e.target.closest('[data-li]');if(lvb){loadLevel(+lvb.dataset.li);return;}
+  const vt=e.target.closest('[data-view]');if(vt){$('views').dataset.show=vt.dataset.view;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b===vt));return;}
+  const zb=e.target.closest('[data-zoom]');if(zb){app.zoom=Math.max(0,Math.min(ZOOMS.length-1,app.zoom+ +zb.dataset.zoom));renderPanel();return;}
+  const sw=e.target.closest('[data-color]');if(sw){app.color=sw.dataset.color;renderTools();return;}
+  const wc=e.target.closest('[data-wcolor]');if(wc&&app.pop){pushHist();app.wires[app.pop.i].color=wc.dataset.wcolor;save();renderPanel();return;}
+  const id=e.target.id;
+  if(id==='mWire'){stopSim();app.mode='wire';app.banner=null;renderAll();return;}
+  if(id==='mSim'){startSim();return;}
+  if(id==='bUndo'){if(app.hist.length){app.wires=JSON.parse(app.hist.pop());app.pop=null;save();renderTools();renderPanel();}return;}
+  if(id==='bClear'){if($('bClear').dataset.arm){pushHist();app.wires=[];app.pop=null;app.report=null;save();renderTools();renderPanel();renderReport();}else{$('bClear').dataset.arm=1;$('bClear').textContent='한 번 더 누르면 철거';}return;}
+  if(id==='bHint'){doHint();return;}
+  if(id==='bTest'){doTest();return;}
+  if(id==='bNext'){loadLevel(app.li+1);window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(id==='popDel'){pushHist();app.wires.splice(app.pop.i,1);app.pop=null;app.report=null;save();renderTools();renderPanel();renderReport();return;}
+  if(id==='popClose'){app.pop=null;renderPanel();return;}
+  if(app.mode!=='wire')return;
+  const t=e.target.closest('[data-t]');if(t){onTerm(t.dataset.t);return;}
+  const w=e.target.closest('[data-w]');if(w){const pb=$('panelbox'),box=pb.getBoundingClientRect();
+    app.pop={i:+w.dataset.w,x:Math.min(e.clientX-box.left+pb.scrollLeft+8,box.width+pb.scrollLeft-230),y:e.clientY-box.top+8};app.sel=null;renderPanel();return;}
+  if(e.target.closest('#panel')){if(app.sel||app.pop){app.sel=null;app.pop=null;app.banner=null;renderBanner();renderPanel();}}
+});
+document.addEventListener('change',e=>{if(e.target.id==='popTag'&&app.pop){pushHist();app.wires[app.pop.i].tag=e.target.value;save();app.report=null;renderPanel();renderReport();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){app.sel=null;app.pop=null;renderPanel();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'&&app.mode==='wire'&&app.hist.length&&!/SELECT|INPUT/.test(document.activeElement.tagName)){e.preventDefault();app.wires=JSON.parse(app.hist.pop());save();renderTools();renderPanel();}});
+document.addEventListener('pointermove',e=>{if(!app.sel||app.mode!=='wire')return;const pv=$('preview');if(!pv)return;const p=compAt(app.sel),q=svgPt(e);
+  pv.setAttribute('d',`M${p.x} ${p.y} C${p.x} ${p.y+p.dir*60} ${q.x} ${q.y} ${q.x} ${q.y}`);});
+/* 시뮬레이션: 누르는 순간 반응하도록 pointerdown 사용 */
+document.addEventListener('pointerdown',e=>{if(app.mode!=='sim')return;
+  const pb=e.target.closest('[data-pb]');if(pb){e.preventDefault();app.st.pb[pb.dataset.pb]=true;simStep(0);return;}
+  const a=e.target.closest('[data-act]');if(!a)return;const [k,id]=a.dataset.act.split(':');
+  if(k==='brk'){app.st.brk=!app.st.brk;if(app.st.brk){app.st.smpsTrip=false;app.banner=null;}else app.banner={kind:'info',text:brkName(lv())+' 차단'};renderBanner();}
+  if(k==='sw')app.st.sw[id]=app.st.sw[id]==='ON'?'OFF':'ON';
+  if(k==='trip'){app.st.trip[id]=!app.st.trip[id];toast(app.st.trip[id]?'THR 트립: 과부하 상태를 흉내 냈어요. 다시 누르면 복귀.':'THR 복귀','info');}
+  simStep(0);});
+function releasePB(){if(app.mode!=='sim')return;let ch=false;for(const k in app.st.pb)if(app.st.pb[k]){app.st.pb[k]=false;ch=true;}if(ch)simStep(0);}
+document.addEventListener('pointerup',releasePB);document.addEventListener('pointercancel',releasePB);
+document.addEventListener('contextmenu',e=>{if(app.mode==='sim'&&e.target.closest('#panel'))e.preventDefault();});
+let timer=null;
+function startSim(){app.mode='sim';app.sel=null;app.pop=null;app.hl=[];app.st=initState(lv(),false);app.banner={kind:'info',text:brkName(lv())+'가 내려가 있어요. 판넬의 '+brkName(lv())+'를 눌러 전원을 넣으세요.'};app.sig='';
+  app.r=solve(lv(),app.wires,app.st);renderTools();renderBanner();renderPanel();renderLegend();
+  clearInterval(timer);timer=setInterval(()=>simStep(.1),100);}
+function stopSim(){clearInterval(timer);timer=null;app.r=null;}
+function simStep(dt){const l=lv(),st=app.st;let r=tick(l,app.wires,st,dt);
+  if(r.faults.length){const f=r.faults[0];app.faults++;
+    if(['short','mix','both','chatter'].includes(f.type))st.brk=false;
+    if(f.type==='dcshort')st.smpsTrip=true;if(f.type==='burn')st.burnt[f.id]=true;
+    app.banner={kind:'bad',text:faultText(l,f)};renderBanner();r=tick(l,app.wires,st,0);}
+  app.r=r;
+  const sig=JSON.stringify([st.brk,st.sw,st.pb,st.coil,st.trip,Object.values(st.pos).map(Math.round),Object.values(st.tm).map(v=>Math.round(v*10)),Object.values(st.fk).map(v=>Math.floor(v/0.5)),r.loads,st.smpsTrip]);
+  if(sig!==app.sig){app.sig=sig;renderPanel();}}
+function doTest(){const l=lv();const res=runTests(l,app.wires);const num=numberingCheck(l,app.wires);app.report={...res,num};
+  if(res.pass){const s=1+(num.need>0&&num.ok===num.need?1:0)+(app.hints===0&&app.faults===0?1:0);prog.stars[l.id]=Math.max(prog.stars[l.id]||0,s);store.set(prog);
+    app.banner={kind:'ok',text:'동작 테스트 통과! 도면대로 동작해요.'};}
+  else app.banner={kind:'bad',text:'동작 테스트에서 걸린 곳이 있어요. 아래 결과를 확인하세요.'};
+  renderLevels();renderBanner();renderReport();$('report').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function doHint(){const l=lv();app.hints++;const {wrong,missing}=diagnose(l,app.wires);let html;
+  if(wrong.length){const w=wrong[0];app.hl=[w.a,w.b];html=`<b>도면과 다른 선:</b> ${termName(l,w.a)} ↔ ${termName(l,w.b)}. 도면에서는 이 두 단자가 같은 선으로 이어지지 않아요. 선을 눌러 삭제해 보세요.`;}
+  else if(missing.length){const [a,b,lab]=missing[0];app.hl=[a,b];html=`<b>빠진 연결:</b> ${termName(l,a)} ↔ ${termName(l,b)}${lab?` (넘버링 <b style="color:var(--pink)">${lab}</b>)`:''}. 깜빡이는 두 단자를 이어 보세요. 같은 선(같은 전위)이면 다른 단자를 거쳐 건너 배선해도 정답이에요.`;}
+  else html='배선이 도면과 같아요! <b>동작 테스트 ▶</b>를 눌러 보세요.';
+  app.report={hint:`<p>힌트 ${app.hints}회째 · ${html}</p><p class="empty">남은 문제: 도면과 다른 선 ${wrong.length}개, 빠진 연결 ${missing.length}개</p>`};
+  renderPanel();renderReport();}
+let start=0;try{const id=localStorage.getItem('cbx-trainer-lvid');const i=LEVELS.findIndex(l=>l.id===id);if(i>=0)start=i;}catch(e){}
+loadLevel(start);
+</script>
